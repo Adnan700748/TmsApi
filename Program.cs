@@ -40,4 +40,10 @@ app.MapGet("/api/assessments/results", () =>
 })
 .RequireAuthorization();
 
+app.MapGet("/api/enrollments/worker-smoke", async (EnrollmentWorker worker) =>
+{
+   await worker.ProcessBatch();
+   return Results.Ok("processed");
+});
+
 app.Run();

@@ -1,14 +1,19 @@
 public class EnrollmentWorker
 {
-    private readonly IEnrollmentService _service;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public EnrollmentWorker(IEnrollmentService service)
+    public EnrollmentWorker(IServiceScopeFactory scopeFactory)
     {
-        _service = service;
+        _scopeFactory = scopeFactory;
     }
 
-    public void ProcessBatch()
+    public async Task ProcessBatch()
     {
-        
+         using var scope = _scopeFactory.CreateScope();
+
+         var svc = scope.ServiceProvider.GetRequiredService<IEnrollmentService>();
+
+         var enrollments = await svc.GetAllAsync();
+
     }
 }
