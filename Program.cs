@@ -18,8 +18,8 @@ builder.Services.AddOptions<PaymentOptions>()
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
-options.ValidateScopes = true;
-options.ValidateOnBuild = true;
+    options.ValidateScopes = true;
+    options.ValidateOnBuild = true;
 });
 
 var app = builder.Build();
@@ -48,6 +48,19 @@ app.MapGet("/api/enrollments/worker-smoke", async (EnrollmentWorker worker) =>
 {
    await worker.ProcessBatch();
    return Results.Ok("processed");
+});
+
+// Temporary test endpoints for Exercise 4 (remove after Session 3)
+app.MapPost("/api/enrollments/test", async (IEnrollmentService svc, string studentId, string courseCode) =>
+{
+    var result = await svc.EnrollAsync(studentId, courseCode);
+    return Results.Ok(result);
+});
+
+app.MapGet("/api/enrollments/test/{id}", async (IEnrollmentService svc, string id) =>
+{
+    var result = await svc.GetByIdAsync(id);
+    return result is not null ? Results.Ok(result) : Results.NotFound();
 });
 
 app.Run();
