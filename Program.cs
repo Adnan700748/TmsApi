@@ -11,6 +11,10 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton<EnrollmentWorker>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddOptions<PaymentOptions>()
+   .BindConfiguration("Payments")
+   .ValidateDataAnnotations()
+   .ValidateOnStart();
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
