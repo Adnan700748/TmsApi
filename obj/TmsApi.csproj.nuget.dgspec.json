@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\CSUG\\Desktop\\LAB\\TmsApi\\TmsApi.csproj": {}
+    "C:\\Users\\CSUG\\Desktop\\Lab\\TmsApi\\TmsApi.csproj": {}
   },
   "projects": {
-    "C:\\Users\\CSUG\\Desktop\\LAB\\TmsApi\\TmsApi.csproj": {
+    "C:\\Users\\CSUG\\Desktop\\Lab\\TmsApi\\TmsApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\CSUG\\Desktop\\LAB\\TmsApi\\TmsApi.csproj",
+        "projectUniqueName": "C:\\Users\\CSUG\\Desktop\\Lab\\TmsApi\\TmsApi.csproj",
         "projectName": "TmsApi",
-        "projectPath": "C:\\Users\\CSUG\\Desktop\\LAB\\TmsApi\\TmsApi.csproj",
+        "projectPath": "C:\\Users\\CSUG\\Desktop\\Lab\\TmsApi\\TmsApi.csproj",
         "packagesPath": "C:\\Users\\CSUG\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\CSUG\\Desktop\\LAB\\TmsApi\\obj\\",
+        "outputPath": "C:\\Users\\CSUG\\Desktop\\Lab\\TmsApi\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\CSUG\\AppData\\Roaming\\NuGet\\NuGet.Config"

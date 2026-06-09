@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
+ builder.Services.AddControllers(); 
+
 builder.Services
     .AddAuthentication("Training")
     .AddScheme<AuthenticationSchemeOptions,
@@ -33,6 +35,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers();
 app.MapGet("/api/assessments/results", () =>
 {
     return Results.Ok(new
