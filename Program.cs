@@ -9,6 +9,19 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddSingleton<EnrollmentWorker>();
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddOptions<PaymentOptions>()
+   .BindConfiguration("Payments")
+   .ValidateDataAnnotations()
+   .ValidateOnStart();
+
+builder.Host.UseDefaultServiceProvider(options =>
+{
+    options.ValidateScopes = true;
+    options.ValidateOnBuild = true;
+});
+
 var app = builder.Build();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
@@ -30,5 +43,24 @@ app.MapGet("/api/assessments/results", () =>
     });
 })
 .RequireAuthorization();
+
+app.MapGet("/api/enrollments/worker-smoke", async (EnrollmentWorker worker) =>
+{
+   await worker.ProcessBatch();
+   return Results.Ok("processed");
+});
+
+// Temporary test endpoints for Exercise 4 (remove after Session 3)
+app.MapPost("/api/enrollments/test", async (IEnrollmentService svc, string studentId, string courseCode) =>
+{
+    var result = await svc.EnrollAsync(studentId, courseCode);
+    return Results.Ok(result);
+});
+
+app.MapGet("/api/enrollments/test/{id}", async (IEnrollmentService svc, string id) =>
+{
+    var result = await svc.GetByIdAsync(id);
+    return result is not null ? Results.Ok(result) : Results.NotFound();
+});
 
 app.Run();

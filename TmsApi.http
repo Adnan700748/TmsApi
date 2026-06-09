@@ -6,3 +6,6 @@ Accept: application/json
 
 
 ###
+POST  {{TmsApi_HostAddress}}/api/enrollments/test?studentId=S-001&courseCode=CS-101
+X-Training-User: Adnan
+Accept: application/json
