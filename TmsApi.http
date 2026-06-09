@@ -9,3 +9,20 @@ Accept: application/json
 POST  {{TmsApi_HostAddress}}/api/enrollments/test?studentId=S-001&courseCode=CS-101
 X-Training-User: Adnan
 Accept: application/json
+
+
+###
+POST  {{TmsApi_HostAddress}}/api/enrollments
+X-Training-User: Adnan
+Accept: application/json
+Content-Type: application/json
+
+{
+    "studentId": "S-001",
+    "courseCode": "CS-101"
+}
+
+###
+DELETE {{TmsApi_HostAddress}}/api/enrollments/{id}
+X-Training-User: Adnan
+Accept: application/json
