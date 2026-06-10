@@ -18,6 +18,8 @@ builder.Services.AddOptions<PaymentOptions>()
    .ValidateDataAnnotations()
    .ValidateOnStart();
 
+builder.Services.AddProblemDetails();
+
 builder.Host.UseDefaultServiceProvider(options =>
 {
     options.ValidateScopes = true;
@@ -31,6 +33,10 @@ app.UseExceptionHandler("/error");
 app.UseHttpsRedirection();
 
 app.UseRouting();
+
+app.UseExceptionHandler();
+
+app.UseStatusCodePages();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -64,6 +70,12 @@ app.MapGet("/api/enrollments/test/{id}", async (IEnrollmentService svc, string i
 {
     var result = await svc.GetByIdAsync(id);
     return result is not null ? Results.Ok(result) : Results.NotFound();
+});
+
+app.MapGet("/api/error", () =>
+{
+    throw new TmsDatabaseException(
+        "Simulated database failure for ProblemDetails testing");
 });
 
 app.Run();
