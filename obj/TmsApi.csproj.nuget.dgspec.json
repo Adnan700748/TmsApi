@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Owner\\Desktop\\Lab\\TmsApi\\TmsApi.csproj": {}
+    "C:\\Users\\Owner\\Desktop\\Practice\\TmsApi\\TmsApi.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Owner\\Desktop\\Lab\\TmsApi\\TmsApi.csproj": {
+    "C:\\Users\\Owner\\Desktop\\Practice\\TmsApi\\TmsApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Owner\\Desktop\\Lab\\TmsApi\\TmsApi.csproj",
+        "projectUniqueName": "C:\\Users\\Owner\\Desktop\\Practice\\TmsApi\\TmsApi.csproj",
         "projectName": "TmsApi",
-        "projectPath": "C:\\Users\\Owner\\Desktop\\Lab\\TmsApi\\TmsApi.csproj",
+        "projectPath": "C:\\Users\\Owner\\Desktop\\Practice\\TmsApi\\TmsApi.csproj",
         "packagesPath": "C:\\Users\\Owner\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Owner\\Desktop\\Lab\\TmsApi\\obj\\",
+        "outputPath": "C:\\Users\\Owner\\Desktop\\Practice\\TmsApi\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -51,6 +51,16 @@
         "net10.0": {
           "framework": "net10.0",
           "targetAlias": "net10.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[10.0.9, )"
+            },
+            "Scalar.AspNetCore": {
+              "target": "Package",
+              "version": "[2.16.2, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
