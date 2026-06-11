@@ -26,3 +26,8 @@ Content-Type: application/json
 DELETE {{TmsApi_HostAddress}}/api/enrollments/{id}
 X-Training-User: Adnan
 Accept: application/json
+
+###
+GET {{TmsApi_HostAddress}}/api/error
+X-Training-User: Adnan
+Accept: application/json

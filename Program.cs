@@ -1,8 +1,12 @@
+using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
- builder.Services.AddControllers(); 
+ builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
+builder.Services.AddOpenApi();
 
 builder.Services
     .AddAuthentication("Training")
@@ -18,7 +22,7 @@ builder.Services.AddOptions<PaymentOptions>()
    .ValidateDataAnnotations()
    .ValidateOnStart();
 
-builder.Services.AddProblemDetails();
+
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -34,8 +38,15 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseExceptionHandler();
-
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
+else
+{
+    app.UseExceptionHandler();
+}
 app.UseStatusCodePages();
 
 app.UseAuthentication();
@@ -77,5 +88,6 @@ app.MapGet("/api/error", () =>
     throw new TmsDatabaseException(
         "Simulated database failure for ProblemDetails testing");
 });
+//comment
 
 app.Run();
