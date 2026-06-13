@@ -46,6 +46,8 @@ public class CoursesController(ICourseService courseService) : ControllerBase
         var deleted = await courseService.DeleteAsync(code);
         return deleted ? NoContent() : NotFound();
     }
+
+    
 }
 
 public record CreateCourseRequest(
