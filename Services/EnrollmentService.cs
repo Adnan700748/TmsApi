@@ -78,8 +78,3 @@ public class EnrollmentService : IEnrollmentService
     }
 }
 
-public record EnrollmentRecord(
-    string Id,
-    string StudentId,
-    string CourseCode,
-    DateTime EnrolledAt);
