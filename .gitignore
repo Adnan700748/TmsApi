@@ -1,19 +1,10 @@
 # Build output
-bin/
-obj/
+bin/*
+obj/*
 
+obj
+bin
 # DLLs and executables
-*.dll
-*.exe
-*.pdb
-*.deps.json
-*.runtimeconfig.json
-*.staticwebassets.endpoints.json
-
-# NuGet files
-*.nuget.*
-project.assets.json
-project.nuget.cache
 
 # Development settings
 appsettings.Development.json
