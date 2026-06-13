@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 [Route("api/students")]
 public class StudentsController(IStudentService studentService) : ControllerBase
 {
-    // GET /api/students returns all students
+   
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -12,7 +12,7 @@ public class StudentsController(IStudentService studentService) : ControllerBase
         return Ok(students);
     }
 
-    // GET /api/students/{id} returns one or 404
+  
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {
@@ -20,7 +20,6 @@ public class StudentsController(IStudentService studentService) : ControllerBase
         return student is not null ? Ok(student) : NotFound();
     }
 
-    // POST /api/students creates and returns 201 with Location header
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateStudentRequest request)
     {
@@ -40,7 +39,6 @@ public class StudentsController(IStudentService studentService) : ControllerBase
             created);
     }
 
-    // DELETE /api/students/{id} returns 204 or 404
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
