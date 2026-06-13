@@ -1,9 +1,11 @@
 # Build output
+obj
+bin
+
 bin/*
 obj/*
 
-obj
-bin
+
 # DLLs and executables
 
 # Development settings
