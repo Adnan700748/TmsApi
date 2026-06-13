@@ -5,6 +5,9 @@ bin
 bin/*
 obj/*
 
+bin/
+obj/
+
 
 # DLLs and executables
 
