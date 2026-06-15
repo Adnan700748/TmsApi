@@ -1,6 +1,12 @@
+using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
 
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
+builder.Services.AddOpenApi();
 
 builder.Services
     .AddAuthentication("Training")
@@ -15,6 +21,9 @@ builder.Services.AddOptions<PaymentOptions>()
    .BindConfiguration("Payments")
    .ValidateDataAnnotations()
    .ValidateOnStart();
+builder.Services.AddSingleton<IStudentService, StudentService>();
+builder.Services.AddSingleton<ICourseService, CourseService>();
+
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -30,9 +39,21 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
+else
+{
+    app.UseExceptionHandler();
+}
+app.UseStatusCodePages();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers();
 app.MapGet("/api/assessments/results", () =>
 {
     return Results.Ok(new
@@ -62,5 +83,12 @@ app.MapGet("/api/enrollments/test/{id}", async (IEnrollmentService svc, string i
     var result = await svc.GetByIdAsync(id);
     return result is not null ? Results.Ok(result) : Results.NotFound();
 });
+
+app.MapGet("/api/error", () =>
+{
+    throw new TmsDatabaseException(
+        "Simulated database failure for ProblemDetails testing");
+});
+//comment
 
 app.Run();

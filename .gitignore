@@ -1,0 +1,18 @@
+# Build output
+obj
+bin
+
+bin/*
+obj/*
+
+bin/
+obj/
+
+
+# DLLs and executables
+
+# Development settings
+appsettings.Development.json
+
+# VS Code folders
+.vscode/
