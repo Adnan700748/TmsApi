@@ -24,11 +24,12 @@ public class StudentsController(IStudentService studentService) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateStudentRequest request)
     {
+        var EnrollmentNum = Guid.NewGuid().ToString("N")[..8];
         var student = new Student
         {
             Id = request.Id,
             Name = request.Name,
-            RegistrationNumber = request.Id,
+            RegistrationNumber = EnrollmentNum,
             GPA = request.GPA
         };
 
