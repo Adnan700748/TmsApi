@@ -1,14 +1,12 @@
 using System;
 namespace TmsApi.Entities;
-public class Enrollment
+public class Certificate
 {
-    public int Id { get; set; }
+    public int Id { get; set; } 
+    public required string SerialNumber { get; set; } 
+    public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
     public int StudentId { get; set; }
     public int CourseId { get; set; }
-    public decimal? Grade { get; set; } 
-    public DateTime EnrolledAt { get; set; } = DateTime.UtcNow;
-
-    // Navigation properties back to entities
     public Student Student { get; set; } = null!;
     public Course Course { get; set; } = null!;
 }

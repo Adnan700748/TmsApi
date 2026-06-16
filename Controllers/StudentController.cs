@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using TmsApi.Entities;
 
 [ApiController]
 [Route("api/students")]
@@ -27,7 +28,7 @@ public class StudentsController(IStudentService studentService) : ControllerBase
         {
             Id = request.Id,
             Name = request.Name,
-            Age = request.Age,
+            RegistrationNumber = request.Id,
             GPA = request.GPA
         };
 
