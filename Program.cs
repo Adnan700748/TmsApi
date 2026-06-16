@@ -1,5 +1,7 @@
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
+using TmsApi.Data;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +25,7 @@ builder.Services.AddOptions<PaymentOptions>()
    .ValidateOnStart();
 builder.Services.AddSingleton<IStudentService, StudentService>();
 builder.Services.AddSingleton<ICourseService, CourseService>();
+builder.Services.AddDbContext<TmsDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase")));
 
 
 builder.Host.UseDefaultServiceProvider(options =>

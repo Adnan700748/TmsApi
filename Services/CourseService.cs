@@ -1,3 +1,5 @@
+using TmsApi.Entities;
+
 public interface ICourseService
 {
     Task<Course> CreateAsync(Course course);
