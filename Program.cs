@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using TmsApi.Data;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -93,6 +92,19 @@ app.MapGet("/api/error", () =>
     throw new TmsDatabaseException(
         "Simulated database failure for ProblemDetails testing");
 });
-//comment
+
+// Seed data here
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<TmsDbContext>();
+
+    context.Database.Migrate();
+
+    if (!context.Students.Any())
+    {
+        // seed data
+    }
+}
 
 app.Run();
