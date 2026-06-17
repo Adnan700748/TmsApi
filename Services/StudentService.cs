@@ -1,3 +1,5 @@
+using TmsApi.Entities;
+
 public interface IStudentService
 {
     Task<Student> CreateAsync(Student student);

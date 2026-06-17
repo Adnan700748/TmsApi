@@ -1,6 +1,7 @@
 using Scalar.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
-
+using Microsoft.EntityFrameworkCore;
+using TmsApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,20 +11,22 @@ builder.Services.AddOpenApi();
 
 builder.Services
     .AddAuthentication("Training")
-    .AddScheme<AuthenticationSchemeOptions,
-        TrainingAuthHandler> ("Training", null);
+    .AddScheme<AuthenticationSchemeOptions,TrainingAuthHandler> ("Training", null);
 
 builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton<EnrollmentWorker>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddOptions<PaymentOptions>()
-   .BindConfiguration("Payments")
-   .ValidateDataAnnotations()
-   .ValidateOnStart();
+    .BindConfiguration("Payments")
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 builder.Services.AddSingleton<IStudentService, StudentService>();
 builder.Services.AddSingleton<ICourseService, CourseService>();
-
+builder.Services.AddDbContext<TmsDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase")));
+builder.Services.AddDbContext<TmsDbContext>(options =>options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase"))
+    .LogTo(Console.WriteLine, LogLevel.Information) // Log SQL to output window
+    .EnableSensitiveDataLogging()); // Show parameters in querylogs (dev only)
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -89,6 +92,19 @@ app.MapGet("/api/error", () =>
     throw new TmsDatabaseException(
         "Simulated database failure for ProblemDetails testing");
 });
-//comment
+
+// Seed data here
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<TmsDbContext>();
+
+    context.Database.Migrate();
+
+    if (!context.Students.Any())
+    {
+        // seed data
+    }
+}
 
 app.Run();

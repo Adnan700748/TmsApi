@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using TmsApi.Entities;
 
 [ApiController]
 [Route("api/courses")]
@@ -28,7 +29,7 @@ public class CoursesController(ICourseService courseService) : ControllerBase
             Code = request.Code,
             Title = request.Title,
             Capacity = request.Capacity,
-            EnrolledCount = 0
+          
         };
 
         var created = await courseService.CreateAsync(course);
