@@ -5,6 +5,7 @@ using TmsApi.Data;
 using Microsoft.Extensions.Logging;
 using TmsApi.Entities;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -94,7 +95,7 @@ app.MapGet("/api/error", () =>
         "Simulated database failure for ProblemDetails testing");
 });
 
-// Seed data here
+
 
 using (var scope = app.Services.CreateScope())
 {
@@ -205,5 +206,4 @@ using (var scope = app.Services.CreateScope())
         context.SaveChanges();
     }
 }
-
 app.Run();
