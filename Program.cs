@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using TmsApi.Data;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -21,12 +22,9 @@ builder.Services.AddOptions<PaymentOptions>()
     .BindConfiguration("Payments")
     .ValidateDataAnnotations()
     .ValidateOnStart();
-builder.Services.AddSingleton<IStudentService, StudentService>();
-builder.Services.AddSingleton<ICourseService, CourseService>();
-builder.Services.AddDbContext<TmsDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase")));
-builder.Services.AddDbContext<TmsDbContext>(options =>options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase"))
-    .LogTo(Console.WriteLine, LogLevel.Information) // Log SQL to output window
-    .EnableSensitiveDataLogging()); // Show parameters in querylogs (dev only)
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddDbContext<TmsDbContext>(options =>options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase")));
 
 builder.Host.UseDefaultServiceProvider(options =>
 {

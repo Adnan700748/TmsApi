@@ -12,7 +12,7 @@ using TmsApi.Data;
 namespace TmsApi.Migrations
 {
     [DbContext(typeof(TmsDbContext))]
-    [Migration("20260616083439_InitialCreate")]
+    [Migration("20260618093018_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -66,8 +66,8 @@ namespace TmsApi.Migrations
                     b.Property<decimal?>("Grade")
                         .HasColumnType("numeric");
 
-                    b.Property<string>("StudentId")
-                        .HasColumnType("text");
+                    b.Property<int>("StudentId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -80,8 +80,11 @@ namespace TmsApi.Migrations
 
             modelBuilder.Entity("TmsApi.Entities.Student", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("GPA")
                         .HasColumnType("numeric");
@@ -112,7 +115,9 @@ namespace TmsApi.Migrations
 
                     b.HasOne("TmsApi.Entities.Student", "Student")
                         .WithMany("Enrollments")
-                        .HasForeignKey("StudentId");
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Course");
 

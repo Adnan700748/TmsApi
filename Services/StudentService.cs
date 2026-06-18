@@ -1,46 +1,54 @@
+using Microsoft.EntityFrameworkCore;
+using TmsApi.Data;
 using TmsApi.Entities;
 
 public interface IStudentService
 {
     Task<Student> CreateAsync(Student student);
-    Task<Student?> GetByIdAsync(string id);
+    Task<Student?> GetByIdAsync(int id);
     Task<IReadOnlyList<Student>> GetAllAsync();
-    Task<bool> DeleteAsync(string id);
+    Task<bool> DeleteAsync(int id);
 }
 
 public class StudentService : IStudentService
 {
-    private readonly Dictionary<string, Student> _store = new();
+    private readonly TmsDbContext _dbContext;
     private readonly ILogger<StudentService> _logger;
 
-    public StudentService(ILogger<StudentService> logger)
+    public StudentService(ILogger<StudentService> logger, TmsDbContext dbContext)
+
     {
+        _dbContext = dbContext;
         _logger = logger;
     }
 
-    public Task<Student> CreateAsync(Student student)
+    public async Task<Student> CreateAsync(Student student)
     {
-        if (_store.ContainsKey(student.Id))
+        var existing = await _dbContext.Students.Where(s => s.Id == student.Id).AnyAsync();
+
+        if (existing)
         {
             _logger.LogWarning(
                 "Duplicate student creation attempt {StudentId}",
                 student.Id);
 
-            return Task.FromResult(_store[student.Id]);
+            return student;
         }
 
-        _store[student.Id] = student;
+        _dbContext.Students.Add(student);
+
+        await _dbContext.SaveChangesAsync();
 
         _logger.LogInformation(
             "Created student {StudentId}",
             student.Id);
 
-        return Task.FromResult(student);
+        return student;
     }
-
-    public Task<Student?> GetByIdAsync(string id)
+    public async Task<Student?> GetByIdAsync(int id)
     {
-        _store.TryGetValue(id, out var student);
+        var student = await _dbContext.Students
+            .FirstOrDefaultAsync(s => s.Id == id);
 
         if (student is null)
         {
@@ -49,33 +57,36 @@ public class StudentService : IStudentService
                 id);
         }
 
-        return Task.FromResult(student);
+        return student;
     }
 
-    public Task<IReadOnlyList<Student>> GetAllAsync()
+    public async Task<IReadOnlyList<Student>> GetAllAsync()
     {
-        IReadOnlyList<Student> students = _store.Values.ToList();
-
-        return Task.FromResult(students);
+        return await _dbContext.Students.ToListAsync();
     }
 
-    public Task<bool> DeleteAsync(string id)
+    public async Task<bool> DeleteAsync(int id)
     {
-        var removed = _store.Remove(id);
+        var student = await _dbContext.Students
+            .FirstOrDefaultAsync(s => s.Id == id);
 
-        if (removed)
-        {
-            _logger.LogInformation(
-                "Deleted student {StudentId}",
-                id);
-        }
-        else
+        if (student is null)
         {
             _logger.LogWarning(
                 "Delete failed student {StudentId} not found",
                 id);
+
+            return false;
         }
 
-        return Task.FromResult(removed);
+        _dbContext.Students.Remove(student);
+
+        await _dbContext.SaveChangesAsync();
+
+        _logger.LogInformation(
+            "Deleted student {StudentId}",
+            id);
+
+        return true;
     }
 }

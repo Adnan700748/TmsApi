@@ -15,7 +15,7 @@ public class StudentsController(IStudentService studentService) : ControllerBase
 
   
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(int id)
     {
         var student = await studentService.GetByIdAsync(id);
         return student is not null ? Ok(student) : NotFound();
@@ -27,7 +27,7 @@ public class StudentsController(IStudentService studentService) : ControllerBase
         var EnrollmentNum = Guid.NewGuid().ToString("N")[..8];
         var student = new Student
         {
-            Id = request.Id,
+          //  Id = request.Id,
             Name = request.Name,
             RegistrationNumber = EnrollmentNum,
             GPA = request.GPA
@@ -42,7 +42,7 @@ public class StudentsController(IStudentService studentService) : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(string id)
+    public async Task<IActionResult> Delete(int id)
     {
         var deleted = await studentService.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
@@ -50,7 +50,7 @@ public class StudentsController(IStudentService studentService) : ControllerBase
 }
 
 public record CreateStudentRequest(
-    string Id,
+   // string Id,
     string Name,
     int Age,
     decimal GPA);
