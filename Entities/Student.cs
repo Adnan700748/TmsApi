@@ -1,7 +1,7 @@
 namespace TmsApi.Entities;
 public class Student 
 { 
-    public string? Id { get; set; } 
+    public int Id { get; set; } 
     public required string RegistrationNumber {get; set; } 
     public required string Name {get; set; } 
     public decimal GPA {get; set; }

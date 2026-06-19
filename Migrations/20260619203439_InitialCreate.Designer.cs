@@ -12,8 +12,8 @@ using TmsApi.Data;
 namespace TmsApi.Migrations
 {
     [DbContext(typeof(TmsDbContext))]
-    [Migration("20260618000838_AddAssessmentsAndCertificates")]
-    partial class AddAssessmentsAndCertificates
+    [Migration("20260619203439_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -39,7 +39,7 @@ namespace TmsApi.Migrations
                     b.Property<decimal>("MaxScore")
                         .HasColumnType("numeric");
 
-                    b.Property<string>("Titel")
+                    b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -74,14 +74,11 @@ namespace TmsApi.Migrations
                     b.Property<int>("StudentId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("StudentId1")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CourseId");
 
-                    b.HasIndex("StudentId1");
+                    b.HasIndex("StudentId");
 
                     b.ToTable("Certificates");
                 });
@@ -127,8 +124,8 @@ namespace TmsApi.Migrations
                     b.Property<decimal?>("Grade")
                         .HasColumnType("numeric");
 
-                    b.Property<string>("StudentId")
-                        .HasColumnType("text");
+                    b.Property<int>("StudentId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -141,8 +138,11 @@ namespace TmsApi.Migrations
 
             modelBuilder.Entity("TmsApi.Entities.Student", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("GPA")
                         .HasColumnType("numeric");
@@ -184,7 +184,9 @@ namespace TmsApi.Migrations
 
                     b.HasOne("TmsApi.Entities.Student", "Student")
                         .WithMany("Certificates")
-                        .HasForeignKey("StudentId1");
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Course");
 
@@ -201,7 +203,9 @@ namespace TmsApi.Migrations
 
                     b.HasOne("TmsApi.Entities.Student", "Student")
                         .WithMany("Enrollments")
-                        .HasForeignKey("StudentId");
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Course");
 
