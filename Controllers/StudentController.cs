@@ -1,11 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using TmsApi.Entities;
 
 [ApiController]
 [Route("api/students")]
 public class StudentsController(IStudentService studentService) : ControllerBase
 {
-   
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -13,7 +11,6 @@ public class StudentsController(IStudentService studentService) : ControllerBase
         return Ok(students);
     }
 
-  
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {
@@ -24,21 +21,8 @@ public class StudentsController(IStudentService studentService) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateStudentRequest request)
     {
-        var EnrollmentNum = Guid.NewGuid().ToString("N")[..8];
-        var student = new Student
-        {
-            Id = request.Id,
-            Name = request.Name,
-            RegistrationNumber = EnrollmentNum,
-            GPA = request.GPA
-        };
-
-        var created = await studentService.CreateAsync(student);
-
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = created.Id },
-            created);
+        var record = await studentService.AddAsync(request);
+        return CreatedAtAction(nameof(GetById), new { id = record.Id }, record);
     }
 
     [HttpDelete("{id}")]
@@ -48,9 +32,3 @@ public class StudentsController(IStudentService studentService) : ControllerBase
         return deleted ? NoContent() : NotFound();
     }
 }
-
-public record CreateStudentRequest(
-    string Id,
-    string Name,
-    int Age,
-    decimal GPA);
