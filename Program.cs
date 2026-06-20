@@ -12,8 +12,8 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<TmsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase"))
-           .LogTo(Console.WriteLine, LogLevel.Information)   // Log SQL to output window
-           .EnableSensitiveDataLogging());                    // Show parameters in query logs (dev only)
+            .LogTo(Console.WriteLine, LogLevel.Information)   // Log SQL to output window
+            .EnableSensitiveDataLogging());                    // Show parameters in query logs (dev only)
 
 
 builder.Services
