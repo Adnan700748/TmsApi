@@ -31,4 +31,5 @@ public class StudentsController(IStudentService studentService) : ControllerBase
         var deleted = await studentService.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
     }
+    
 }
