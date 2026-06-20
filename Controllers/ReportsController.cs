@@ -71,10 +71,10 @@ public class ReportsController(TmsDbContext context) : ControllerBase
 //student pagination
      [HttpGet("students")]
     public async Task<IActionResult> GetStudents(
-        int page = 1,
+        int page ,int pageSize ,
         CancellationToken cancellationToken = default)
     {
-        const int pageSize = 20;
+         
 
         var students = await context.Students
             .OrderBy(s => s.Name)
