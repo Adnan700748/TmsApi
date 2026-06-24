@@ -31,5 +31,12 @@ public class StudentsController(IStudentService studentService) : ControllerBase
         var deleted = await studentService.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
     }
+
+    [HttpPut("{id}")]
+public async Task<IActionResult> Update(int id, [FromBody] UpdateStudentRequest request)
+{
+    var student = await studentService.UpdateAsync(id, request);
+    return student is not null ? Ok(student) : NotFound();
+}
     
 }

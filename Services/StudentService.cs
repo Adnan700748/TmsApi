@@ -4,13 +4,18 @@ using TmsApi.Entities;
 
 public record CreateStudentRequest(string RegistrationNumber, string Name, decimal GPA, bool IsActive = true);
 public record StudentResponse(int Id, string RegistrationNumber, string Name, decimal GPA, bool IsActive);
-
+public record UpdateStudentRequest(
+    string? Name = null, 
+    decimal? GPA = null, 
+    bool? IsActive = null
+);
 public interface IStudentService
 {
     Task<StudentResponse> AddAsync(CreateStudentRequest request);
     Task<StudentResponse?> GetByIdAsync(string id);
     Task<IReadOnlyList<StudentResponse>> GetAllAsync();
     Task<bool> DeleteAsync(string id);
+    Task<StudentResponse?> UpdateAsync(int id, UpdateStudentRequest request);
 }
 
 public class StudentService(TmsDbContext db, ILogger<StudentService> logger) : IStudentService
@@ -76,6 +81,34 @@ public class StudentService(TmsDbContext db, ILogger<StudentService> logger) : I
         return true;
     }
 
+
     private static StudentResponse ToResponse(Student s) =>
         new(s.Id, s.RegistrationNumber, s.Name, s.GPA, s.IsActive);
+
+        public async Task<StudentResponse?> UpdateAsync(int id, UpdateStudentRequest request)
+{
+    // 1. Find the student
+    var student = await db.Students.FindAsync(id);
+    if (student is null)
+    {
+        logger.LogWarning("Update failed: Student {StudentId} not found", id);
+        return null;
+    }
+
+    // 2. Update only if values are provided
+    if (!string.IsNullOrEmpty(request.Name))
+        student.Name = request.Name;
+    
+    if (request.GPA.HasValue)
+        student.GPA = request.GPA.Value;
+    
+    if (request.IsActive.HasValue)
+        student.IsActive = request.IsActive.Value;
+
+    // 3. Save changes
+    await db.SaveChangesAsync();
+    logger.LogInformation("Updated student {StudentId}", id);
+    
+    return ToResponse(student);
+}
 }
