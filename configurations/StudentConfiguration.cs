@@ -20,5 +20,10 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
 
         builder.Property(s => s.GPA)
             .IsRequired();
+
+        builder.Property<DateTime>("LastUpdated");    
+
+        builder.Property(s => s.Version)
+            .IsRowVersion();
     }
 }
