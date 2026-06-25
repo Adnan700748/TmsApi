@@ -1,3 +1,4 @@
+// TmsApi/Configurations/StudentConfiguration.cs
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TmsApi.Entities;
@@ -25,5 +26,12 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
 
         builder.Property(s => s.Version)
             .IsRowVersion();
+
+        // Soft delete filter
+        builder.HasQueryFilter(s => s.IsActive);
+        
+        //  Index for performance
+        builder.HasIndex(s => s.IsActive);
+        builder.HasIndex(s => s.RegistrationNumber).IsUnique();
     }
 }
