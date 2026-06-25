@@ -16,6 +16,12 @@ public class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
         builder.Property(e => e.CourseId)
             .IsRequired();
 
+              builder.Property(e => e.IsArchived)
+            .HasDefaultValue(false);
+
+              builder.Property(e => e.year)
+            .IsRequired();
+
         // Prevent deleting a student when enrollments exist.
         builder.HasOne(e => e.Student)
             .WithMany(s => s.Enrollments)

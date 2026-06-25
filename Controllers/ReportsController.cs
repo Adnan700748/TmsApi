@@ -104,6 +104,41 @@ public class ReportsController(TmsDbContext context) : ControllerBase
     return Ok(courses);
 }
 
+[HttpGet("shaped")]
+public async Task<IActionResult> Shaped(CancellationToken cancellationToken)
+{
+    var report = await context.Students
+        .AsNoTracking()
+        .Select(s => new
+        {
+            s.Name,
+            EnrollmentCount = s.Enrollments.Count
+        })
+        .ToListAsync(cancellationToken);
 
+    foreach (var r in report)
+    {
+        Console.WriteLine(
+            $"{r.Name}: {r.EnrollmentCount} enrollments");
+    }
+
+    return Ok(report);
+}
+[HttpGet("include")]
+public async Task<IActionResult> Include(CancellationToken cancellationToken)
+{
+    var students = await context.Students
+        .AsNoTracking()
+        .Include(s => s.Enrollments)
+        .ToListAsync(cancellationToken);
+
+    var result = students.Select(s => new
+    {
+        s.Name,
+        EnrollmentCount = s.Enrollments.Count
+    });
+
+    return Ok(result);
+}
 
 }
