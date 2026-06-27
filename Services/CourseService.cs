@@ -1,79 +1,72 @@
+using Microsoft.EntityFrameworkCore;
+using TmsApi.Data;
+using TmsApi.Entities;
+
+public record CreateCourseRequest(string Code, string Title, int Capacity);
+public record CourseResponse(int Id, string Code, string Title, int Capacity);
+
 public interface ICourseService
 {
-    Task<Course> CreateAsync(Course course);
-    Task<Course?> GetByCodeAsync(string code);
-    Task<IReadOnlyList<Course>> GetAllAsync();
+    Task<CourseResponse> AddAsync(CreateCourseRequest request);
+    Task<CourseResponse?> GetByIdAsync(string code);
+    Task<IReadOnlyList<CourseResponse>> GetAllAsync();
     Task<bool> DeleteAsync(string code);
 }
 
-public class CourseService : ICourseService
+public class CourseService(TmsDbContext db, ILogger<CourseService> logger) : ICourseService
 {
-    private readonly Dictionary<string, Course> _store = new();
-    private readonly ILogger<CourseService> _logger;
-
-    public CourseService(ILogger<CourseService> logger)
+    public async Task<CourseResponse> AddAsync(CreateCourseRequest request)
     {
-        _logger = logger;
-    }
-
-    public Task<Course> CreateAsync(Course course)
-    {
-        if (_store.ContainsKey(course.Code))
+        var existing = await db.Courses.FirstOrDefaultAsync(c => c.Code == request.Code);
+        if (existing is not null)
         {
-            _logger.LogWarning(
-                "Duplicate course creation attempt {CourseCode}",
-                course.Code);
-
-            return Task.FromResult(_store[course.Code]);
+            logger.LogWarning("Course {CourseCode} already exists", request.Code);
+            return ToResponse(existing);
         }
 
-        _store[course.Code] = course;
-
-        _logger.LogInformation(
-            "Created course {CourseCode}",
-            course.Code);
-
-        return Task.FromResult(course);
+        var course = new Course
+        {
+            Code = request.Code,
+            Title = request.Title,
+            Capacity = request.Capacity
+        };
+        db.Courses.Add(course);
+        await db.SaveChangesAsync();
+        logger.LogInformation("Added course {CourseCode}", course.Code);
+        return ToResponse(course);
     }
 
-    public Task<Course?> GetByCodeAsync(string code)
+    public async Task<CourseResponse?> GetByIdAsync(string code)
     {
-        _store.TryGetValue(code, out var course);
-
+        var course = await db.Courses.FirstOrDefaultAsync(c => c.Code == code);
         if (course is null)
         {
-            _logger.LogWarning(
-                "Course {CourseCode} not found",
-                code);
+            logger.LogWarning("Course {CourseCode} not found", code);
+            return null;
         }
-
-        return Task.FromResult(course);
+        return ToResponse(course);
     }
 
-    public Task<IReadOnlyList<Course>> GetAllAsync()
+    public async Task<IReadOnlyList<CourseResponse>> GetAllAsync()
     {
-        IReadOnlyList<Course> courses = _store.Values.ToList();
-
-        return Task.FromResult(courses);
+        return await db.Courses
+            .Select(c => new CourseResponse(c.Id, c.Code, c.Title, c.Capacity))
+            .ToListAsync();
     }
 
-    public Task<bool> DeleteAsync(string code)
+    public async Task<bool> DeleteAsync(string code)
     {
-        var removed = _store.Remove(code);
-
-        if (removed)
+        var course = await db.Courses.FirstOrDefaultAsync(c => c.Code == code);
+        if (course is null)
         {
-            _logger.LogInformation(
-                "Deleted course {CourseCode}",
-                code);
+            logger.LogWarning("Delete failed: Course {CourseCode} not found", code);
+            return false;
         }
-        else
-        {
-            _logger.LogWarning(
-                "Delete failed course {CourseCode} not found",
-                code);
-        }
-
-        return Task.FromResult(removed);
+        db.Courses.Remove(course);
+        await db.SaveChangesAsync();
+        logger.LogInformation("Deleted course {CourseCode}", code);
+        return true;
     }
+
+    private static CourseResponse ToResponse(Course c) => new(c.Id, c.Code, c.Title, c.Capacity);
 }
