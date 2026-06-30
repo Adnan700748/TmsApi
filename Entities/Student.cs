@@ -22,5 +22,9 @@ public class Student
 public Student()
 {
 }
+public void AddGrade(GradeRecord grade)
+{
+    _grades.Add(grade);
+}
    
 }

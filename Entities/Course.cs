@@ -7,8 +7,6 @@ public class Course
     public required string Title { get; init; }
     public int Capacity { get; set; }
     
-    private CourseStatus _status = CourseStatus.Active;
-    
     public CourseStatus Status
 {
     get;

@@ -9,7 +9,7 @@ public class Enrollment
     public DateTime EnrolledAt { get; set; } = DateTime.UtcNow;
 
     public bool IsArchived { get; set;} 
-    public int year{ get; set;}
+    public int Year { get; set; }
     public Student Student { get; set; } = null!;
     public Course Course { get; set; } = null!;
 }
