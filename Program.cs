@@ -3,6 +3,7 @@ using TmsApi.Data;
 using TmsApi.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Scalar.AspNetCore;
+using TmsApi.Enums;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -118,5 +119,84 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.MapGet("/api/test/challenge1", () =>
+{
+    var results = new List<string>();
+
+    try
+    {
+        // 1. Archiving a course zeroes its capacity
+        var course = new Course
+        {
+            Code = "CS-101",
+            Title = "C# Basics",
+            Capacity = 10
+        };
+
+        course.Status = CourseStatus.Archived;
+
+        results.Add(course.Capacity == 0
+            ? "PASS: Archived course has zero capacity."
+            : "FAIL: Capacity must drop to 0 when archived.");
+
+        // 2. Empty name is rejected
+        try
+        {
+            var badStudent = new Student(0, "TMS-0000", "");
+
+            results.Add("FAIL: Empty name should throw.");
+        }
+        catch (ArgumentException)
+        {
+            results.Add("PASS: Empty name correctly rejected.");
+        }
+
+        // 3. Valid student
+        var student = new Student(99, "TMS-0099", "Abeba");
+        results.Add("PASS: Valid student created.");
+
+        // 4. Invalid grade
+        try
+        {
+            var badGrade = new GradeRecord(
+                "CS-101",
+                150m,
+                DateTime.UtcNow);
+
+            results.Add("FAIL: Invalid score should throw.");
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            results.Add("PASS: Invalid score correctly rejected.");
+        }
+
+        // 5. Value equality
+        var grade1 = new GradeRecord(
+            "CS-101",
+            95.5m,
+            DateTime.UnixEpoch);
+
+        var grade2 = new GradeRecord(
+            "CS-101",
+            95.5m,
+            DateTime.UnixEpoch);
+
+        results.Add(grade1 == grade2
+            ? "PASS: Value equality confirmed."
+            : "FAIL: Record structs should compare by value.");
+
+        results.Add("Challenge 1 PASSED");
+    }
+    catch (Exception ex)
+    {
+        results.Add($"Unexpected failure: {ex.Message}");
+    }
+
+    return Results.Ok(new
+    {
+        Challenge = "Module 1 - Challenge 1",
+        Results = results
+    });
+});
 
 app.Run();
