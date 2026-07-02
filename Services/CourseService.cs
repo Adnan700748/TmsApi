@@ -1,72 +1,44 @@
 using Microsoft.EntityFrameworkCore;
 using TmsApi.Data;
+using TmsApi.Dtos;
 using TmsApi.Entities;
 
-public record CreateCourseRequest(string Code, string Title, int Capacity);
-public record CourseResponse(int Id, string Code, string Title, int Capacity);
+namespace TmsApi.Services;
 
-public interface ICourseService
+public class CourseService( TmsDbContext context, ILogger<CourseService> logger): ICourseService
 {
-    Task<CourseResponse> AddAsync(CreateCourseRequest request);
-    Task<CourseResponse?> GetByIdAsync(string code);
-    Task<IReadOnlyList<CourseResponse>> GetAllAsync();
-    Task<bool> DeleteAsync(string code);
-}
-
-public class CourseService(TmsDbContext db, ILogger<CourseService> logger) : ICourseService
-{
-    public async Task<CourseResponse> AddAsync(CreateCourseRequest request)
+    public Task<CourseResponseDto?> GetByIdAsync( int id, CancellationToken ct)
     {
-        var existing = await db.Courses.FirstOrDefaultAsync(c => c.Code == request.Code);
-        if (existing is not null)
-        {
-            logger.LogWarning("Course {CourseCode} already exists", request.Code);
-            return ToResponse(existing);
-        }
+        return context.Courses
+            .AsNoTracking()
+            .Where(c => c.Id == id)
+            .Select(c => new CourseResponseDto(
+                c.Id,
+                c.Code,
+                c.Title,
+                c.MaxCapacity,
+                c.Enrollments.Count))
+            .FirstOrDefaultAsync(ct);
+    }
 
+    public async Task<CourseResponseDto> CreateAsync( CreateCourseRequest request, CancellationToken ct)
+    {
         var course = new Course
         {
             Code = request.Code,
             Title = request.Title,
-            Capacity = request.Capacity
+            MaxCapacity = request.MaxCapacity
         };
-        db.Courses.Add(course);
-        await db.SaveChangesAsync();
-        logger.LogInformation("Added course {CourseCode}", course.Code);
-        return ToResponse(course);
+
+        context.Courses.Add(course);
+        await context.SaveChangesAsync(ct);
+
+        logger.LogInformation( "Created course {CourseId} ({CourseCode})", course.Id, course.Code);
+        return (await GetByIdAsync(course.Id, ct))!;
     }
 
-    public async Task<CourseResponse?> GetByIdAsync(string code)
+    public Task<bool> CodeExistsAsync(string code, CancellationToken ct)
     {
-        var course = await db.Courses.FirstOrDefaultAsync(c => c.Code == code);
-        if (course is null)
-        {
-            logger.LogWarning("Course {CourseCode} not found", code);
-            return null;
-        }
-        return ToResponse(course);
+    return context.Courses.AsNoTracking().AnyAsync(c => c.Code == code, ct);
     }
-
-    public async Task<IReadOnlyList<CourseResponse>> GetAllAsync()
-    {
-        return await db.Courses
-            .Select(c => new CourseResponse(c.Id, c.Code, c.Title, c.Capacity))
-            .ToListAsync();
-    }
-
-    public async Task<bool> DeleteAsync(string code)
-    {
-        var course = await db.Courses.FirstOrDefaultAsync(c => c.Code == code);
-        if (course is null)
-        {
-            logger.LogWarning("Delete failed: Course {CourseCode} not found", code);
-            return false;
-        }
-        db.Courses.Remove(course);
-        await db.SaveChangesAsync();
-        logger.LogInformation("Deleted course {CourseCode}", code);
-        return true;
-    }
-
-    private static CourseResponse ToResponse(Course c) => new(c.Id, c.Code, c.Title, c.Capacity);
 }
