@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TmsApi.Data;
+using TmsApi.Dtos;
 using TmsApi.Entities;
 
 namespace TmsApi.Services;
@@ -9,18 +10,42 @@ public class CourseService(
     ILogger<CourseService> logger)
     : ICourseService
 {
-    public async Task<Course?> GetByIdAsync(int id, CancellationToken ct)
+    public Task<CourseResponseDto?> GetByIdAsync(
+        int id,
+        CancellationToken ct)
     {
-        return await context.Courses.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id, ct);
-        throw new NotImplementedException();
+        return context.Courses
+            .AsNoTracking()
+            .Where(c => c.Id == id)
+            .Select(c => new CourseResponseDto(
+                c.Id,
+                c.Code,
+                c.Title,
+                c.MaxCapacity,
+                c.Enrollments.Count))
+            .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<Course> CreateAsync(Course course, CancellationToken ct)
+    public async Task<CourseResponseDto> CreateAsync(
+        CreateCourseRequest request,
+        CancellationToken ct)
     {
+        var course = new Course
+        {
+            Code = request.Code,
+            Title = request.Title,
+            MaxCapacity = request.MaxCapacity
+        };
+
         context.Courses.Add(course);
+
         await context.SaveChangesAsync(ct);
-        logger.LogInformation("Course {Code} created successfully.",course.Code);
-        return course;
-        throw new NotImplementedException();
+
+        logger.LogInformation(
+            "Created course {CourseId} ({CourseCode})",
+            course.Id,
+            course.Code);
+
+        return (await GetByIdAsync(course.Id, ct))!;
     }
 }
