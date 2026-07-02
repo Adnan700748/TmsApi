@@ -3,6 +3,7 @@ using TmsApi.Data;
 using TmsApi.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Scalar.AspNetCore;
+using TmsApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
