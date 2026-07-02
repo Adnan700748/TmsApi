@@ -28,7 +28,7 @@ public class CourseService(TmsDbContext db, ILogger<CourseService> logger) : ICo
         {
             Code = request.Code,
             Title = request.Title,
-            Capacity = request.Capacity
+            MaxCapacity = request.Capacity
         };
         db.Courses.Add(course);
         await db.SaveChangesAsync();
@@ -50,7 +50,7 @@ public class CourseService(TmsDbContext db, ILogger<CourseService> logger) : ICo
     public async Task<IReadOnlyList<CourseResponse>> GetAllAsync()
     {
         return await db.Courses
-            .Select(c => new CourseResponse(c.Id, c.Code, c.Title, c.Capacity))
+            .Select(c => new CourseResponse(c.Id, c.Code, c.Title, c.MaxCapacity))
             .ToListAsync();
     }
 
@@ -68,5 +68,5 @@ public class CourseService(TmsDbContext db, ILogger<CourseService> logger) : ICo
         return true;
     }
 
-    private static CourseResponse ToResponse(Course c) => new(c.Id, c.Code, c.Title, c.Capacity);
+    private static CourseResponse ToResponse(Course c) => new(c.Id, c.Code, c.Title, c.MaxCapacity);
 }
