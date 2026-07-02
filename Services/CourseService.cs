@@ -5,10 +5,7 @@ using TmsApi.Entities;
 
 namespace TmsApi.Services;
 
-public class CourseService(
-    TmsDbContext context,
-    ILogger<CourseService> logger)
-    : ICourseService
+public class CourseService( TmsDbContext context, ILogger<CourseService> logger): ICourseService
 {
     public Task<CourseResponseDto?> GetByIdAsync(
         int id,
@@ -48,4 +45,11 @@ public class CourseService(
 
         return (await GetByIdAsync(course.Id, ct))!;
     }
+
+    public Task<bool> CodeExistsAsync(string code, CancellationToken ct)
+{
+    return context.Courses
+        .AsNoTracking()
+        .AnyAsync(c => c.Code == code, ct);
+}
 }

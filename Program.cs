@@ -22,11 +22,11 @@ builder.Services
     .AddScheme<AuthenticationSchemeOptions, TrainingAuthHandler>("Training", null);
 builder.Services.AddAuthorization();
 
-// builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
-builder.Services.AddSingleton<EnrollmentWorker>();
+//builder.Services.AddSingleton<EnrollmentWorker>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
+
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -65,10 +65,6 @@ if (app.Environment.IsDevelopment())
 
 app.MapControllers();
 
-app.MapGet("/api/error", () => 
-{ 
-    throw new TmsDatabaseException("Simulated database failure for ProblemDetails testing"); 
-});
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new
 {
