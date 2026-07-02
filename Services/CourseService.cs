@@ -7,9 +7,7 @@ namespace TmsApi.Services;
 
 public class CourseService( TmsDbContext context, ILogger<CourseService> logger): ICourseService
 {
-    public Task<CourseResponseDto?> GetByIdAsync(
-        int id,
-        CancellationToken ct)
+    public Task<CourseResponseDto?> GetByIdAsync( int id, CancellationToken ct)
     {
         return context.Courses
             .AsNoTracking()
@@ -23,9 +21,7 @@ public class CourseService( TmsDbContext context, ILogger<CourseService> logger)
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<CourseResponseDto> CreateAsync(
-        CreateCourseRequest request,
-        CancellationToken ct)
+    public async Task<CourseResponseDto> CreateAsync( CreateCourseRequest request, CancellationToken ct)
     {
         var course = new Course
         {
@@ -35,21 +31,14 @@ public class CourseService( TmsDbContext context, ILogger<CourseService> logger)
         };
 
         context.Courses.Add(course);
-
         await context.SaveChangesAsync(ct);
 
-        logger.LogInformation(
-            "Created course {CourseId} ({CourseCode})",
-            course.Id,
-            course.Code);
-
+        logger.LogInformation( "Created course {CourseId} ({CourseCode})", course.Id, course.Code);
         return (await GetByIdAsync(course.Id, ct))!;
     }
 
     public Task<bool> CodeExistsAsync(string code, CancellationToken ct)
-{
-    return context.Courses
-        .AsNoTracking()
-        .AnyAsync(c => c.Code == code, ct);
-}
+    {
+    return context.Courses.AsNoTracking().AnyAsync(c => c.Code == code, ct);
+    }
 }

@@ -6,8 +6,8 @@ using TmsApi.Entities;
 public class EnrollmentService( TmsDbContext context, ILogger<EnrollmentService> logger) : IEnrollmentService
 {
     public Task<EnrollmentResponseDto?> GetByIdAsync( int courseId, int id, CancellationToken ct)
-{
-    return context.Enrollments
+    {
+        return context.Enrollments
         .AsNoTracking()
         .Where(e => e.Id == id && e.CourseId == courseId)
         .Select(e => new EnrollmentResponseDto(
@@ -16,11 +16,8 @@ public class EnrollmentService( TmsDbContext context, ILogger<EnrollmentService>
             e.StudentId,
             e.EnrolledAt))
         .FirstOrDefaultAsync(ct);
-}
-public async Task<EnrollmentResponseDto> CreateAsync(
-    int courseId,
-    EnrollStudentRequest request,
-    CancellationToken ct)
+    }
+public async Task<EnrollmentResponseDto> CreateAsync( int courseId, EnrollStudentRequest request, CancellationToken ct)
 {
     var enrollment = new Enrollment
     {
@@ -30,19 +27,10 @@ public async Task<EnrollmentResponseDto> CreateAsync(
     };
 
     context.Enrollments.Add(enrollment);
-
     await context.SaveChangesAsync(ct);
 
-    logger.LogInformation(
-        "Student {StudentId} enrolled in course {CourseId}",
-        request.StudentId,
-        courseId);
+    logger.LogInformation( "Student {StudentId} enrolled in course {CourseId}", request.StudentId, courseId);
 
-    return (await GetByIdAsync(
-        courseId,
-        enrollment.Id,
-        ct))!;
+    return (await GetByIdAsync( courseId, enrollment.Id, ct))!;
 }
 }
-
-//public class TmsDatabaseException(string message) : Exception(message);
