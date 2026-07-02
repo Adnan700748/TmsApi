@@ -1,34 +1,34 @@
 using Microsoft.AspNetCore.Mvc;
+using TmsApi.Dtos;
+using TmsApi.Services;
+
+namespace TmsApi.Controllers;
 
 [ApiController]
 [Route("api/courses")]
-public class CoursesController(ICourseService courseService) : ControllerBase
+public class CoursesController( ICourseService courseService) : ControllerBase
 {
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
+    [HttpGet("{id:int}", Name = nameof(GetCourseById))]
+    public async Task<IActionResult> GetCourseById( int id, CancellationToken ct)
     {
-        var courses = await courseService.GetAllAsync();
-        return Ok(courses);
-    }
-
-    [HttpGet("{code}")]
-    public async Task<IActionResult> GetById(string code)
-    {
-        var course = await courseService.GetByIdAsync(code);
-        return course is not null ? Ok(course) : NotFound();
+        var course = await courseService.GetByIdAsync(id, ct);
+        return course is null ? NotFound() : Ok(course);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateCourseRequest request)
+    public async Task<IActionResult> CreateCourse( CreateCourseRequest request, CancellationToken ct)
     {
-        var record = await courseService.AddAsync(request);
-        return CreatedAtAction(nameof(GetById), new { code = record.Code }, record);
-    }
+        if (await courseService.CodeExistsAsync(request.Code, ct))
+        {
+            return Conflict(new ProblemDetails
+            {
+            Title = "Course code already exists",
+            Detail = $"A course with code '{request.Code}' is already registered.",
+            Status = StatusCodes.Status409Conflict
+            });
+        }
 
-    [HttpDelete("{code}")]
-    public async Task<IActionResult> Delete(string code)
-    {
-        var deleted = await courseService.DeleteAsync(code);
-        return deleted ? NoContent() : NotFound();
-    }
+    var result = await courseService.CreateAsync(request, ct);
+    return CreatedAtAction( nameof(GetCourseById), new { id = result.Id }, result);
+}
 }
