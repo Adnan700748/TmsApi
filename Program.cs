@@ -4,10 +4,14 @@ using TmsApi.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Scalar.AspNetCore;
 using TmsApi.Services;
+using TmsApi.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<AuditLogFilter>();
+});
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
