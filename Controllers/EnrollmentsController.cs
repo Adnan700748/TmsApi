@@ -36,4 +36,17 @@ public class EnrollmentsController( ICourseService courseService, IEnrollmentSer
         var enrollment = await enrollmentService.CreateAsync( courseId, request, ct);
         return CreatedAtAction( nameof(GetEnrollment),new { courseId, id = enrollment.Id }, enrollment);
     }
+[HttpGet(Name = "ListCourseEnrollments")]
+public async Task<IActionResult> GetEnrollments( int courseId, CancellationToken ct)
+{
+    var course = await courseService.GetByIdAsync(courseId, ct);
+
+    if (course is null)
+        return NotFound();
+
+    var enrollments =
+        await enrollmentService.GetByCourseAsync(courseId, ct);
+
+    return Ok(enrollments);
+}
 }
