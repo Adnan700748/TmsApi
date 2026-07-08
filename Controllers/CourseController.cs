@@ -10,12 +10,52 @@ namespace TmsApi.Controllers;
 public class CoursesController( ICourseService courseService, LinkGenerator linkGenerator) : ControllerBase
 {
 
-    [HttpGet("{id:int}", Name = nameof(GetCourseById))]
-    public async Task<IActionResult> GetCourseById( int id, CancellationToken ct)
+[HttpGet("{id:int}", Name = nameof(GetCourseById))]
+public async Task<IActionResult> GetCourseById(int id, CancellationToken ct)
+{
+    var course = await courseService.GetByIdAsync(id, ct);
+
+    if (course is null)
+        return NotFound();
+
+    var selfLink = linkGenerator.GetPathByName(
+        HttpContext,
+        nameof(GetCourseById),
+        new { id })!;
+
+    var enrollmentsLink = linkGenerator.GetPathByName(
+        HttpContext,
+        "ListCourseEnrollments",
+        new { courseId = id })!;
+
+    var links = new List<LinkDto>
     {
-        var course = await courseService.GetByIdAsync(id, ct);
-        return course is null ? NotFound() : Ok(course);
+        new(selfLink, "self", "GET"),
+        new(selfLink, "update", "PUT"),
+        new(selfLink, "delete", "DELETE"),
+        new(enrollmentsLink, "enrollments", "GET")
+    };
+
+    if (course.EnrollmentCount < course.MaxCapacity)
+    {
+        links.Add(new LinkDto(
+            enrollmentsLink,
+            "enroll",
+            "POST"));
     }
+
+    var detail = new CourseDetailDto
+    {
+        Id = course.Id,
+        Code = course.Code,
+        Title = course.Title,
+        MaxCapacity = course.MaxCapacity,
+        EnrollmentCount = course.EnrollmentCount,
+        Links = links
+    };
+
+    return Ok(detail);
+}
     [HttpGet]
 public async Task<IActionResult> GetCourses(
     [FromQuery] PagedRequest request,
