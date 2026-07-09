@@ -54,6 +54,7 @@ public async Task<IActionResult> EnrollStudent( int courseId, EnrollStudentReque
 [ProducesResponseType(typeof(IReadOnlyList<EnrollmentResponseDto>), StatusCodes.Status200OK)]
 [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status404NotFound)]
 [EndpointSummary("List enrolments for a course")]
+[EndpointDescription("Returns all enrolments for the specified course.")]
 public async Task<IActionResult> GetEnrollments( int courseId, CancellationToken ct)
 {
     var course = await courseService.GetByIdAsync(courseId, ct);
