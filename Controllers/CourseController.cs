@@ -13,57 +13,47 @@ namespace TmsApi.Controllers;
 [ProducesResponseType( typeof(ProblemDetails),StatusCodes.Status500InternalServerError)]
 public class CoursesController(ICourseService courseService,LinkGenerator linkGenerator) : ControllerBase
 {
-
-[HttpGet("{id:int}", Name = nameof(GetCourseById))]
-[ProducesResponseType( typeof(CourseDetailDto), StatusCodes.Status200OK)]
-[ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-[EndpointSummary("Get a course by ID")]
-[EndpointDescription( "Returns course details with HATEOAS links. Returns 404 if the course does not exist.")]
-public async Task<IActionResult> GetCourseById( int id, CancellationToken ct)
-{
-    var course = await courseService.GetByIdAsync(id, ct);
-
-    if (course is null)
+    [HttpGet("{id:int}", Name = nameof(GetCourseById))]
+    [ProducesResponseType( typeof(CourseDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType( typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Get a course by ID")]
+    [EndpointDescription( "Returns course details with HATEOAS links. Returns 404 if the course does not exist.")]
+    public async Task<IActionResult> GetCourseById( int id, CancellationToken ct)
+    {
+        var course = await courseService.GetByIdAsync(id, ct);
+        
+        if (course is null)
         return NotFound();
-
-    var selfLink = linkGenerator.GetPathByName(
-        HttpContext,
-        nameof(GetCourseById),
-        new { id })!;
-
-    var enrollmentsLink = linkGenerator.GetPathByName(
-        HttpContext,
-        "ListCourseEnrollments",
-        new { courseId = id })!;
-
-    var links = new List<LinkDto>
-    {
-        new(selfLink, "self", "GET"),
-        new(selfLink, "update", "PUT"),
-        new(selfLink, "delete", "DELETE"),
-        new(enrollmentsLink, "enrollments", "GET")
-    };
-
-    if (course.EnrollmentCount < course.MaxCapacity)
-    {
-        links.Add(new LinkDto(
-            enrollmentsLink,
-            "enroll",
-            "POST"));
+        
+        var selfLink = linkGenerator.GetPathByName(HttpContext, nameof(GetCourseById), new { id })!;
+        
+        var enrollmentsLink = linkGenerator.GetPathByName(HttpContext, "ListCourseEnrollments", new { courseId = id })!;
+        
+        var links = new List<LinkDto>
+        {
+            new(selfLink, "self", "GET"),
+            new(selfLink, "update", "PUT"),
+            new(selfLink, "delete", "DELETE"),
+            new(enrollmentsLink, "enrollments", "GET")
+        };
+        
+        if (course.EnrollmentCount < course.MaxCapacity)
+        {
+            links.Add(new LinkDto( enrollmentsLink, "enroll", "POST"));
+        }
+        
+        var detail = new CourseDetailDto
+        {
+            Id = course.Id,
+            Code = course.Code,
+            Title = course.Title,
+            MaxCapacity = course.MaxCapacity,
+            EnrollmentCount = course.EnrollmentCount,
+            Links = links
+        };
+        
+        return Ok(detail);
     }
-
-    var detail = new CourseDetailDto
-    {
-        Id = course.Id,
-        Code = course.Code,
-        Title = course.Title,
-        MaxCapacity = course.MaxCapacity,
-        EnrollmentCount = course.EnrollmentCount,
-        Links = links
-    };
-
-    return Ok(detail);
-}
 [HttpGet]
 [ProducesResponseType( typeof(PagedResponse<CourseResponseDto>), StatusCodes.Status200OK)]
 [EndpointSummary("List courses with pagination")]
