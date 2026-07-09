@@ -25,21 +25,21 @@ public class CoursesController(ICourseService courseService,LinkGenerator linkGe
         if (course is null)
         return NotFound();
         
-        var selfLink = linkGenerator.GetPathByName(HttpContext, nameof(GetCourseById), new { id })!;
+        var selfPath = linkGenerator.GetPathByName(HttpContext, nameof(GetCourseById), new { id })!;
         
-        var enrollmentsLink = linkGenerator.GetPathByName(HttpContext, "ListCourseEnrollments", new { courseId = id })!;
+        var enrollmentsPath = linkGenerator.GetPathByName(HttpContext, "ListCourseEnrollments", new { courseId = id })!;
         
         var links = new List<LinkDto>
         {
-            new(selfLink, "self", "GET"),
-            new(selfLink, "update", "PUT"),
-            new(selfLink, "delete", "DELETE"),
-            new(enrollmentsLink, "enrollments", "GET")
+            new(selfPath, "self", "GET"),
+            new(selfPath, "update", "PUT"),
+            new(selfPath, "delete", "DELETE"),
+            new(enrollmentsPath, "enrollments", "GET")
         };
         
         if (course.EnrollmentCount < course.MaxCapacity)
         {
-            links.Add(new LinkDto( enrollmentsLink, "enroll", "POST"));
+            links.Add(new LinkDto( enrollmentsPath, "enroll", "POST"));
         }
         
         var detail = new CourseDetailDto
