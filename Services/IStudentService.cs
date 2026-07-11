@@ -8,4 +8,5 @@ public interface IStudentService
     Task<bool> DeleteAsync(string id);
     Task<StudentResponseDto?> UpdateAsync(int id, UpdateStudentRequest request);
     Task<StudentResponseDto?> GetByIdAsync(int id, CancellationToken ct);
+    Task<PagedResponse<StudentResponseDto>> GetStudentsAsync( PagedRequest request, CancellationToken ct);
 }
