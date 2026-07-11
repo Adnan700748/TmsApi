@@ -5,6 +5,22 @@ using TmsApi.Dtos;
 
 public class StudentService(TmsDbContext db, ILogger<StudentService> logger) : IStudentService
 {
+
+    public async Task<IReadOnlyList<EnrollmentResponseDto>> GetEnrollmentsAsync(
+    int studentId,
+    CancellationToken ct)
+{
+    return await db.Enrollments
+        .AsNoTracking()
+        .Where(e => e.StudentId == studentId)
+        .Select(e => new EnrollmentResponseDto(
+            e.Id,
+            e.CourseId,
+            e.StudentId,
+            e.EnrolledAt))
+        .ToListAsync(ct);
+}
+
     public async Task<PagedResponse<StudentResponseDto>> GetStudentsAsync(
     PagedRequest request,
     CancellationToken ct)

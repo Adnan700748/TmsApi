@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using TmsApi.Data;
+using Microsoft.AspNetCore.Routing;
 using TmsApi.Dtos;
 
 namespace TmsApi.Controllers;
@@ -11,85 +11,152 @@ namespace TmsApi.Controllers;
 [ProducesResponseType(
     typeof(ProblemDetails),
     StatusCodes.Status500InternalServerError)]
-public class StudentController( IStudentService studentService, LinkGenerator linkGenerator) : ControllerBase
+public class StudentController(
+    IStudentService studentService,
+    LinkGenerator linkGenerator) : ControllerBase
 {
-   [HttpGet]
-[ProducesResponseType(typeof(PagedResponse<StudentResponseDto>),StatusCodes.Status200OK)]
-[EndpointSummary("List students with pagination")]
-[EndpointDescription("Returns a paginated, optionally filtered list of TMS students. PageSize is capped at 50.")]
-public async Task<IActionResult> GetStudents( [FromQuery] PagedRequest request, CancellationToken ct)
-{
-    var result = await studentService.GetStudentsAsync(request, ct);
-    return Ok(result);
-}
-   [HttpGet("{id:int}", Name = nameof(GetStudent))]
-[ProducesResponseType(typeof(StudentDetailDto),StatusCodes.Status200OK)]
-[ProducesResponseType(typeof(ProblemDetails),StatusCodes.Status404NotFound)]
-[EndpointSummary("Get a student by ID")]
-[EndpointDescription("Returns student details with HATEOAS links. Returns 404 if the student does not exist.")]
-public async Task<IActionResult> GetStudent(int id, CancellationToken ct)
-{
-    var student = await studentService.GetByIdAsync(id, ct);
-
-    if (student is null)
-        return NotFound();
-
-    var selfPath = linkGenerator.GetPathByName(
-        HttpContext,
-        nameof(GetStudent),
-        new { id })!;
-
-    var links = new List<LinkDto>
+    [HttpGet]
+    [ProducesResponseType(
+        typeof(PagedResponse<StudentResponseDto>),
+        StatusCodes.Status200OK)]
+    [EndpointSummary("List students with pagination")]
+    [EndpointDescription(
+        "Returns a paginated, optionally filtered list of TMS students. PageSize is capped at 50.")]
+    public async Task<IActionResult> GetStudents(
+        [FromQuery] PagedRequest request,
+        CancellationToken ct)
     {
-        new(selfPath, "self", "GET"),
-        new(selfPath, "update", "PUT"),
-        new(selfPath, "delete", "DELETE")
-    };
+        var result = await studentService.GetStudentsAsync(request, ct);
+        return Ok(result);
+    }
 
-    var detail = new StudentDetailDto
+    [HttpGet("{id:int}", Name = nameof(GetStudent))]
+    [ProducesResponseType(
+        typeof(StudentDetailDto),
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        typeof(ProblemDetails),
+        StatusCodes.Status404NotFound)]
+    [EndpointSummary("Get a student by ID")]
+    [EndpointDescription(
+        "Returns student details with HATEOAS links. Returns 404 if the student does not exist.")]
+    public async Task<IActionResult> GetStudent(
+        int id,
+        CancellationToken ct)
     {
-        Id = student.Id,
-        RegistrationNumber = student.RegistrationNumber,
-        Name = student.Name,
-        GPA = student.GPA,
-        IsActive = student.IsActive,
-        Links = links
-    };
+        var student = await studentService.GetByIdAsync(id, ct);
 
-    return Ok(detail);
-}
+        if (student is null)
+            return NotFound();
 
-[HttpPut("{id:int}", Name = nameof(UpdateStudent))]
-[ProducesResponseType(typeof(StudentResponseDto), StatusCodes.Status200OK)]
-[ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-[EndpointSummary("Update a student")]
-[EndpointDescription("Updates the supplied student fields. Returns 404 if the student does not exist.")]
-public async Task<IActionResult> UpdateStudent(
-    int id,
-    UpdateStudentRequest request)
-{
-    var student = await studentService.UpdateAsync(id, request);
+        var selfPath = linkGenerator.GetPathByName(
+            HttpContext,
+            nameof(GetStudent),
+            new { id })!;
 
-    if (student is null)
-        return NotFound();
+        var updatePath = linkGenerator.GetPathByName(
+            HttpContext,
+            nameof(UpdateStudent),
+            new { id })!;
 
-    return Ok(student);
-}
+        var deletePath = linkGenerator.GetPathByName(
+            HttpContext,
+            nameof(DeleteStudent),
+            new { id })!;
 
-[HttpDelete("{id:int}", Name = nameof(DeleteStudent))]
-[ProducesResponseType(StatusCodes.Status204NoContent)]
-[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-[EndpointSummary("Delete a student")]
-[EndpointDescription("Deletes a student. Returns 404 if the student does not exist.")]
-public async Task<IActionResult> DeleteStudent(int id)
-{
-    var deleted = await studentService.DeleteAsync(id.ToString());
+        var enrollmentsPath = linkGenerator.GetPathByName(
+            HttpContext,
+            nameof(GetStudentEnrollments),
+            new { id })!;
 
-    if (!deleted)
-        return NotFound();
+        var links = new List<LinkDto>
+        {
+            new(selfPath, "self", "GET"),
+            new(updatePath, "update", "PUT"),
+            new(deletePath, "delete", "DELETE"),
+            new(enrollmentsPath, "enrollments", "GET")
+        };
 
-    return NoContent();
-}
-    
+        var detail = new StudentDetailDto
+        {
+            Id = student.Id,
+            RegistrationNumber = student.RegistrationNumber,
+            Name = student.Name,
+            GPA = student.GPA,
+            IsActive = student.IsActive,
+            Links = links
+        };
+
+        return Ok(detail);
+    }
+
+    [HttpPut("{id:int}", Name = nameof(UpdateStudent))]
+    [ProducesResponseType(
+        typeof(StudentResponseDto),
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        typeof(ValidationProblemDetails),
+        StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(
+        typeof(ProblemDetails),
+        StatusCodes.Status404NotFound)]
+    [EndpointSummary("Update a student")]
+    [EndpointDescription(
+        "Updates the supplied student fields. Returns 404 if the student does not exist.")]
+    public async Task<IActionResult> UpdateStudent(
+        int id,
+        UpdateStudentRequest request)
+    {
+        var student = await studentService.UpdateAsync(id, request);
+
+        if (student is null)
+            return NotFound();
+
+        return Ok(student);
+    }
+
+    [HttpDelete("{id:int}", Name = nameof(DeleteStudent))]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(
+        typeof(ProblemDetails),
+        StatusCodes.Status404NotFound)]
+    [EndpointSummary("Delete a student")]
+    [EndpointDescription(
+        "Deletes a student. Returns 404 if the student does not exist.")]
+    public async Task<IActionResult> DeleteStudent(int id)
+    {
+        var deleted = await studentService.DeleteAsync(id.ToString());
+
+        if (!deleted)
+            return NotFound();
+
+        return NoContent();
+    }
+
+    [HttpGet(
+        "{id:int}/enrollments",
+        Name = nameof(GetStudentEnrollments))]
+    [ProducesResponseType(
+        typeof(IReadOnlyList<EnrollmentResponseDto>),
+        StatusCodes.Status200OK)]
+    [ProducesResponseType(
+        typeof(ProblemDetails),
+        StatusCodes.Status404NotFound)]
+    [EndpointSummary("List enrolments for a student")]
+    [EndpointDescription(
+        "Returns all course enrolments for a student. Returns 404 if the student does not exist.")]
+    public async Task<IActionResult> GetStudentEnrollments(
+        int id,
+        CancellationToken ct)
+    {
+        var student = await studentService.GetByIdAsync(id, ct);
+
+        if (student is null)
+            return NotFound();
+
+        var enrollments =
+            await studentService.GetEnrollmentsAsync(id, ct);
+
+        return Ok(enrollments);
+    }
 }
