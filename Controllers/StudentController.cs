@@ -13,7 +13,7 @@ namespace TmsApi.Controllers;
 [ProducesResponseType(
     typeof(ProblemDetails),
     StatusCodes.Status500InternalServerError)]
-public class StudentController( IStudentService studentService, TmsDbContext context, ILogger<StudentController> logger, LinkGenerator linkGenerator) : ControllerBase
+public class StudentController( IStudentService studentService, LinkGenerator linkGenerator) : ControllerBase
 {
    [HttpGet]
 [ProducesResponseType(typeof(PagedResponse<StudentResponseDto>),StatusCodes.Status200OK)]
@@ -59,6 +59,39 @@ public async Task<IActionResult> GetStudent(int id, CancellationToken ct)
     };
 
     return Ok(detail);
+}
+
+[HttpPut("{id:int}", Name = nameof(UpdateStudent))]
+[ProducesResponseType(typeof(StudentResponseDto), StatusCodes.Status200OK)]
+[ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+[EndpointSummary("Update a student")]
+[EndpointDescription("Updates the supplied student fields. Returns 404 if the student does not exist.")]
+public async Task<IActionResult> UpdateStudent(
+    int id,
+    UpdateStudentRequest request)
+{
+    var student = await studentService.UpdateAsync(id, request);
+
+    if (student is null)
+        return NotFound();
+
+    return Ok(student);
+}
+
+[HttpDelete("{id:int}", Name = nameof(DeleteStudent))]
+[ProducesResponseType(StatusCodes.Status204NoContent)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+[EndpointSummary("Delete a student")]
+[EndpointDescription("Deletes a student. Returns 404 if the student does not exist.")]
+public async Task<IActionResult> DeleteStudent(int id)
+{
+    var deleted = await studentService.DeleteAsync(id.ToString());
+
+    if (!deleted)
+        return NotFound();
+
+    return NoContent();
 }
     
 }
