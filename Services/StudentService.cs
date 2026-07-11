@@ -1,26 +1,25 @@
 using Microsoft.EntityFrameworkCore;
 using TmsApi.Data;
 using TmsApi.Entities;
-
-public record CreateStudentRequest(string RegistrationNumber, string Name, decimal GPA, bool IsActive = true);
-public record StudentResponse(int Id, string RegistrationNumber, string Name, decimal GPA, bool IsActive);
-public record UpdateStudentRequest(
-    string? Name = null, 
-    decimal? GPA = null, 
-    bool? IsActive = null
-);
-public interface IStudentService
-{
-    Task<StudentResponse> AddAsync(CreateStudentRequest request);
-    Task<StudentResponse?> GetByIdAsync(string id);
-    Task<IReadOnlyList<StudentResponse>> GetAllAsync();
-    Task<bool> DeleteAsync(string id);
-    Task<StudentResponse?> UpdateAsync(int id, UpdateStudentRequest request);
-}
+using TmsApi.Dtos;
 
 public class StudentService(TmsDbContext db, ILogger<StudentService> logger) : IStudentService
 {
-    public async Task<StudentResponse> AddAsync(CreateStudentRequest request)
+
+    public async Task<StudentResponseDto?> GetByIdAsync( int id, CancellationToken ct)
+    {
+        return await db.Students
+        .AsNoTracking()
+        .Where(s => s.Id == id)
+        .Select(s => new StudentResponseDto(
+            s.Id,
+            s.RegistrationNumber,
+            s.Name,
+            s.GPA,
+            s.IsActive))
+        .FirstOrDefaultAsync(ct); 
+        }
+    public async Task<StudentResponseDto> AddAsync(CreateStudentRequest request)
     {
         var existing = await db.Students.FirstOrDefaultAsync(s => s.RegistrationNumber == request.RegistrationNumber);
         if (existing is not null)
@@ -42,7 +41,7 @@ public class StudentService(TmsDbContext db, ILogger<StudentService> logger) : I
         return ToResponse(student);
     }
 
-    public async Task<StudentResponse?> GetByIdAsync(string id)
+    public async Task<StudentResponseDto?> GetByIdAsync(string id)
     {
         // Support lookup by registration number or numeric id
         Student? student = int.TryParse(id, out var intId)
@@ -57,10 +56,10 @@ public class StudentService(TmsDbContext db, ILogger<StudentService> logger) : I
         return ToResponse(student);
     }
 
-    public async Task<IReadOnlyList<StudentResponse>> GetAllAsync()
+    public async Task<IReadOnlyList<StudentResponseDto>> GetAllAsync()
     {
         return await db.Students
-            .Select(s => new StudentResponse(s.Id, s.RegistrationNumber, s.Name, s.GPA, s.IsActive))
+            .Select(s => new StudentResponseDto(s.Id, s.RegistrationNumber, s.Name, s.GPA, s.IsActive))
             .ToListAsync();
     }
 
@@ -82,10 +81,10 @@ public class StudentService(TmsDbContext db, ILogger<StudentService> logger) : I
     }
 
 
-    private static StudentResponse ToResponse(Student s) =>
+    private static StudentResponseDto ToResponse(Student s) =>
         new(s.Id, s.RegistrationNumber, s.Name, s.GPA, s.IsActive);
 
-        public async Task<StudentResponse?> UpdateAsync(int id, UpdateStudentRequest request)
+        public async Task<StudentResponseDto?> UpdateAsync(int id, UpdateStudentRequest request)
 {
     // 1. Find the student
     var student = await db.Students.FindAsync(id);
