@@ -30,6 +30,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<ICertificateService, CertificateService>();
 
 
 builder.Host.UseDefaultServiceProvider(options =>

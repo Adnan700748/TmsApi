@@ -5,57 +5,13 @@ using TmsApi.Entities;
 
 namespace TmsApi.Services;
 
-public class CertificateService(TmsDbContext db) : ICertificateService
+public class CertificateService( TmsDbContext context, ILogger<CertificateService> logger) : ICertificateService
 {
-    public async Task<PagedResponse<CertificateResponseDto>>
-        GetCertificatesAsync(
-            PagedRequest request,
-            CancellationToken ct)
-    {
-        var page = Math.Max(1, request.Page);
-        var pageSize = Math.Clamp(request.PageSize, 1, 50);
-
-        var query = db.Certificates
-            .AsNoTracking()
-            .AsQueryable();
-
-        // Filter first
-        if (!string.IsNullOrWhiteSpace(request.Search))
-        {
-            var search = request.Search.Trim();
-
-            query = query.Where(c =>
-                c.SerialNumber.Contains(search));
-        }
-
-        // Count after filtering
-        var totalCount = await query.CountAsync(ct);
-
-        // Then page
-        var items = await query
-            .OrderBy(c => c.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(c => new CertificateResponseDto(
-                c.Id,
-                c.SerialNumber,
-                c.IssuedAt,
-                c.StudentId,
-                c.CourseId))
-            .ToListAsync(ct);
-
-        return new PagedResponse<CertificateResponseDto>(
-            items,
-            totalCount,
-            page,
-            pageSize);
-    }
-
-    public async Task<CertificateResponseDto?> GetByIdAsync(
+    public Task<CertificateResponseDto?> GetByIdAsync(
         int id,
         CancellationToken ct)
     {
-        return await db.Certificates
+        return context.Certificates
             .AsNoTracking()
             .Where(c => c.Id == id)
             .Select(c => new CertificateResponseDto(
@@ -65,16 +21,6 @@ public class CertificateService(TmsDbContext db) : ICertificateService
                 c.StudentId,
                 c.CourseId))
             .FirstOrDefaultAsync(ct);
-    }
-
-    public async Task<bool> SerialNumberExistsAsync(
-        string serialNumber,
-        CancellationToken ct)
-    {
-        return await db.Certificates
-            .AnyAsync(
-                c => c.SerialNumber == serialNumber,
-                ct);
     }
 
     public async Task<CertificateResponseDto> CreateAsync(
@@ -88,14 +34,80 @@ public class CertificateService(TmsDbContext db) : ICertificateService
             CourseId = request.CourseId
         };
 
-        db.Certificates.Add(certificate);
-        await db.SaveChangesAsync(ct);
+        context.Certificates.Add(certificate);
+        await context.SaveChangesAsync(ct);
 
-        return new CertificateResponseDto(
+        logger.LogInformation(
+            "Created certificate {CertificateId} ({SerialNumber})",
             certificate.Id,
-            certificate.SerialNumber,
-            certificate.IssuedAt,
-            certificate.StudentId,
-            certificate.CourseId);
+            certificate.SerialNumber);
+
+        return (await GetByIdAsync(certificate.Id, ct))!;
+    }
+
+    public Task<bool> SerialNumberExistsAsync(
+        string serialNumber,
+        CancellationToken ct)
+    {
+        return context.Certificates
+            .AsNoTracking()
+            .AnyAsync(c => c.SerialNumber == serialNumber, ct);
+    }
+
+    public async Task<PagedResponse<CertificateResponseDto>>
+        GetCertificatesAsync(
+            PagedRequest request,
+            CancellationToken ct)
+    {
+        IQueryable<Certificate> query =
+            context.Certificates.AsNoTracking();
+
+        // Search
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            query = query.Where(c =>
+                EF.Functions.ILike(
+                    c.SerialNumber,
+                    $"%{request.Search}%"));
+        }
+
+        // Count BEFORE paging
+        var totalCount = await query.CountAsync(ct);
+
+        // Sorting
+        query = request.OrderBy switch
+        {
+            "SerialNumber" => request.Descending
+                ? query.OrderByDescending(c => c.SerialNumber)
+                : query.OrderBy(c => c.SerialNumber),
+
+            "IssuedAt" => request.Descending
+                ? query.OrderByDescending(c => c.IssuedAt)
+                : query.OrderBy(c => c.IssuedAt),
+
+            _ => request.Descending
+                ? query.OrderByDescending(c => c.Id)
+                : query.OrderBy(c => c.Id)
+        };
+
+        // Paging + Projection
+        var items = await query
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .Select(c => new CertificateResponseDto(
+                c.Id,
+                c.SerialNumber,
+                c.IssuedAt,
+                c.StudentId,
+                c.CourseId))
+            .ToListAsync(ct);
+
+        return new PagedResponse<CertificateResponseDto>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = request.Page,
+            PageSize = request.PageSize
+        };
     }
 }
