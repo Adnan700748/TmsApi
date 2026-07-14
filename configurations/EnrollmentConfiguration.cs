@@ -9,29 +9,13 @@ public class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
     public void Configure(EntityTypeBuilder<Enrollment> builder)
     {
         builder.HasKey(e => e.Id);
-
-        builder.Property(e => e.StudentId)
-            .IsRequired();
-
-        builder.Property(e => e.CourseId)
-            .IsRequired();
-
-              builder.Property(e => e.IsArchived)
-            .HasDefaultValue(false);
-
-              builder.Property(e => e.year)
-            .IsRequired();
-
+        builder.Property(e => e.StudentId).IsRequired();
+        builder.Property(e => e.CourseId).IsRequired();
+        builder.Property(e => e.IsArchived).HasDefaultValue(false);
+        builder.Property(e => e.year).IsRequired();
         // Prevent deleting a student when enrollments exist.
-        builder.HasOne(e => e.Student)
-            .WithMany(s => s.Enrollments)
-            .HasForeignKey(e => e.StudentId)
-            .OnDelete(DeleteBehavior.Restrict);
-
+        builder.HasOne(e => e.Student).WithMany(s => s.Enrollments).HasForeignKey(e => e.StudentId).OnDelete(DeleteBehavior.Restrict);
         // Prevent deleting a course when enrollments exist.
-        builder.HasOne(e => e.Course)
-            .WithMany(c => c.Enrollments)
-            .HasForeignKey(e => e.CourseId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(e => e.Course).WithMany(c => c.Enrollments).HasForeignKey(e => e.CourseId).OnDelete(DeleteBehavior.Restrict);
     }
 }
