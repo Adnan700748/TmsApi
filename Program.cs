@@ -115,7 +115,9 @@ if (app.Environment.IsDevelopment())
         options
             .WithTitle("TMS API Reference")
             .WithTheme(ScalarTheme.DeepSpace)
-            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+            // Tell Scalar to pull both documents into its sidebar dropdown
+        options
             .AddDocument("v1", "API Version 1.0")
             .AddDocument("v2", "API Version 2.0");
     });
