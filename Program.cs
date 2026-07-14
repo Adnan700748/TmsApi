@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Scalar.AspNetCore;
 using TmsApi.Services;
 using TmsApi.Filters;
+using TmsApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,6 +87,8 @@ app.UseRouting();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseMiddleware<V1DeprecationMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

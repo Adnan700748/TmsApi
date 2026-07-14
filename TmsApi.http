@@ -36,3 +36,9 @@ Accept: application/json
 GET  {{TmsApi_HostAddress}}/api/enrollments/{Id}
 X-Training-User: Adnan
 Accept: application/json
+
+###
+GET http://localhost:5187/api/v1/courses
+
+###
+GET http://localhost:5187/api/v2/courses
