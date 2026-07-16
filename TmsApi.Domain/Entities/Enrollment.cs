@@ -1,4 +1,3 @@
-using System;
 namespace TmsApi.Domain.Entities;
 public class Enrollment
 {
