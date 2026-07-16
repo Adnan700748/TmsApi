@@ -17,6 +17,7 @@ builder.Services.AddControllers(options =>
 });
 builder.Services.AddProblemDetails();
 
+
 // v1/v2 versioning
 builder.Services.AddOpenApi("v1", options =>
 {
@@ -41,10 +42,9 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-builder.Services.AddDbContext<TmsDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase"))
-            .LogTo(Console.WriteLine, LogLevel.Information)   // Log SQL to output window
-            .EnableSensitiveDataLogging());                    // Show parameters in query logs (dev only)
+builder.Services.AddDbContext<TmsDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("TmsDatabase"))
+                                                              .LogTo(Console.WriteLine, LogLevel.Information)   // Log SQL to output window
+                                                              .EnableSensitiveDataLogging());  // Show parameters in query logs (dev only)
 
 
 builder.Services
