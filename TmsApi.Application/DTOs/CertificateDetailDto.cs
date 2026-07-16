@@ -1,5 +1,6 @@
 namespace TmsApi.Application.DTOs;
 
+
 public record CertificateDetailDto
 {
     public required int Id { get; init; }
