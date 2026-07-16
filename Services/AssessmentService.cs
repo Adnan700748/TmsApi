@@ -1,8 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using TmsApi.Data;
-using TmsApi.Dtos;
-using TmsApi.Entities;
-
 namespace TmsApi.Services;
 
 public class AssessmentService(

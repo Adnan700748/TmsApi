@@ -1,4 +1,4 @@
-namespace TmsApi.Entities;
+namespace TmsApi.Domain.Entities;
 public class Student 
 { 
     public int Id { get; set; } 
