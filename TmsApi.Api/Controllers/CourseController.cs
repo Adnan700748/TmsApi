@@ -35,7 +35,6 @@ public class CoursesController(ICourseService courseService,LinkGenerator linkGe
         return NotFound();
         
         var selfPath = linkGenerator.GetPathByName(HttpContext, nameof(GetCourseById), new { id })!;
-        
         var enrollmentsPath = linkGenerator.GetPathByName(HttpContext, "ListCourseEnrollments", new { courseId = id })!;
         
         var links = new List<LinkDto>
