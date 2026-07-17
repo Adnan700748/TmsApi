@@ -5,11 +5,7 @@ using TmsApi.Domain.Entities;
 
 namespace TmsApi.Application.Enrollments.Commands;
 
-public class EnrollStudentHandler(
-    IEnrollmentService enrollmentService,
-    ICourseService courseService)
-    : IRequestHandler<EnrollStudentCommand,
-        Result<EnrollmentCreated, EnrollmentError>>
+public class EnrollStudentHandler(IEnrollmentService enrollmentService, ICourseService courseService) : IRequestHandler<EnrollStudentCommand, Result<EnrollmentCreated, EnrollmentError>>
 {
     public async Task<Result<EnrollmentCreated, EnrollmentError>> Handle(
         EnrollStudentCommand command,
