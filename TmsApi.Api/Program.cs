@@ -8,6 +8,9 @@ using TmsApi.Application.Interfaces;
 using TmsApi.Filters;
 using TmsApi.Infrastructure.Persistence;
 using TmsApi.Infrastructure.Services;
+using TmsApi.Application.Enrollments.Commands;
+using TmsApi.Application.Behaviors;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,7 +49,17 @@ builder.Services.AddDbContext<TmsDbContext>(options => options.UseNpgsql(builder
                                                               .LogTo(Console.WriteLine, LogLevel.Information)   // Log SQL to output window
                                                               .EnableSensitiveDataLogging());  // Show parameters in query logs (dev only)
 
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(EnrollStudentCommand).Assembly);
+});
+builder.Services.AddTransient(
+    typeof(IPipelineBehavior<,>),
+    typeof(LoggingBehavior<,>));
 
+builder.Services.AddTransient(
+    typeof(IPipelineBehavior<,>),
+    typeof(ValidationBehavior<,>));
 builder.Services
     .AddAuthentication("Training")
     .AddScheme<AuthenticationSchemeOptions, TrainingAuthHandler>("Training", null);
