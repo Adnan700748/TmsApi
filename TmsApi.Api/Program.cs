@@ -11,6 +11,7 @@ using TmsApi.Infrastructure.Services;
 using TmsApi.Application.Enrollments.Commands;
 using TmsApi.Application.Behaviors;
 using MediatR;
+using TmsApi.Api.ExceptionHandlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,8 @@ builder.Services.AddControllers(options =>
     options.Filters.Add<AuditLogFilter>();
 });
 builder.Services.AddProblemDetails();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 
 // v1/v2 versioning
