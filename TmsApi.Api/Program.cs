@@ -12,6 +12,7 @@ using TmsApi.Application.Enrollments.Commands;
 using TmsApi.Application.Behaviors;
 using MediatR;
 using TmsApi.Api.ExceptionHandlers;
+using FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,28 +53,30 @@ builder.Services.AddDbContext<TmsDbContext>(options => options.UseNpgsql(builder
                                                               .LogTo(Console.WriteLine, LogLevel.Information)   // Log SQL to output window
                                                               .EnableSensitiveDataLogging());  // Show parameters in query logs (dev only)
 
-builder.Services.AddMediatR(cfg =>
-{
-    cfg.RegisterServicesFromAssembly(typeof(EnrollStudentCommand).Assembly);
-});
-builder.Services.AddTransient(
-    typeof(IPipelineBehavior<,>),
-    typeof(LoggingBehavior<,>));
+// registering the MediatR
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(EnrollStudentHandler).Assembly));
 
-builder.Services.AddTransient(
-    typeof(IPipelineBehavior<,>),
-    typeof(ValidationBehavior<,>));
+//registering the FluentValidation
+builder.Services.AddValidatorsFromAssembly(typeof(EnrollStudentValidator).Assembly);
+
+// LoggingBehavior is Registerd  FIRST it must wrap ValidationBehavior
+// so LoggingBehavior runs first and wraps validation failures insideits log scope.
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+
+builder.Services.AddTransient( typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
 builder.Services
     .AddAuthentication("Training")
     .AddScheme<AuthenticationSchemeOptions, TrainingAuthHandler>("Training", null);
 builder.Services.AddAuthorization();
 
-//builder.Services.AddSingleton<EnrollmentWorker>();
+
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IAssessmentService, AssessmentService>();
+
 
 
 builder.Host.UseDefaultServiceProvider(options =>
@@ -95,7 +98,6 @@ app.UseExceptionHandler();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-// app.UseExceptionHandler("/error");
 
 app.UseHttpsRedirection();
 
