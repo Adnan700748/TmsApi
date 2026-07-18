@@ -14,6 +14,7 @@ using MediatR;
 using TmsApi.Api.ExceptionHandlers;
 using FluentValidation;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers(options =>
