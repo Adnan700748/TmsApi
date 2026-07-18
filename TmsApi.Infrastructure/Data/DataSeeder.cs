@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TmsApi.Domain.Entities;
 using TmsApi.Infrastructure.Persistence;
 
-namespace TmsApi.Data;
+namespace TmsApi.Infrastructure.Data;
 
 public static class DataSeeder
 {
