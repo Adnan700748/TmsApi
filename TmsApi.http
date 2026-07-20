@@ -52,3 +52,12 @@ Content-Type: application/json
     "courseCode": "CSE-102"
 }
 
+
+###
+POST http://localhost:5187/api/v2/enrollments
+Content-Type: application/json
+
+{
+  "studentId": 1,
+  "courseCode": "invalid"
+}
