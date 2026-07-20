@@ -110,11 +110,6 @@ app.UseAuthorization();
 
 app.UseMiddleware<V1DeprecationMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.MapScalarApiReference();
-}
 
 app.MapControllers();
 
