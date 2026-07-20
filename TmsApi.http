@@ -72,3 +72,13 @@ Content-Type: application/json
   "studentId": 1,
   "courseCode": "ZZZ-999"
 }
+
+//to test same StudId and Course to get 409 (Duplicate Enrollment)
+###
+POST http://localhost:5187/api/v2/enrollments
+Content-Type: application/json
+
+{
+  "studentId": 1,
+  "courseCode": "CSE-101"
+}
