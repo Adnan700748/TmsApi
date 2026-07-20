@@ -43,6 +43,7 @@ GET http://localhost:5187/api/v1/courses
 ###
 GET http://localhost:5187/api/v2/courses
 
+//to test a Valid Enrollment
 ###
 POST http://localhost:5187/api/v2/enrollments
 Content-Type: application/json
@@ -52,7 +53,7 @@ Content-Type: application/json
     "courseCode": "CSE-102"
 }
 
-
+//to test Invalid Course Code
 ###
 POST http://localhost:5187/api/v2/enrollments
 Content-Type: application/json
@@ -60,4 +61,14 @@ Content-Type: application/json
 {
   "studentId": 1,
   "courseCode": "invalid"
+}
+
+//to test Course does not exist
+###
+POST http://localhost:5187/api/v2/enrollments
+Content-Type: application/json
+
+{
+  "studentId": 1,
+  "courseCode": "ZZZ-999"
 }
