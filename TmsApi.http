@@ -42,3 +42,13 @@ GET http://localhost:5187/api/v1/courses
 
 ###
 GET http://localhost:5187/api/v2/courses
+
+###
+POST http://localhost:5187/api/v2/enrollments
+Content-Type: application/json
+
+{
+    "studentId": 1,
+    "courseCode": "CSE-102"
+}
+

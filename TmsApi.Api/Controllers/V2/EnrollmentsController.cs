@@ -12,17 +12,16 @@ namespace TmsApi.Api.Controllers.V2;
 public class EnrollmentsController(IMediator mediator) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> Enroll(
-        EnrollStudentCommand command,
-        CancellationToken ct)
+    public async Task<IActionResult> Enroll(EnrollStudentCommand command,CancellationToken ct)
     {
         var result = await mediator.Send(command, ct);
 
-        return result.Match<IActionResult>(
-            onSuccess: created => CreatedAtAction(
-                nameof(GetSchedule),
-                new { studentId = created.StudentId },
-                created),
+        return result.Match<IActionResult>(onSuccess: created => CreatedAtAction(nameof(GetSchedule), new
+    {
+        version = "2.0",
+        studentId = created.StudentId
+    },
+    created),
 
             onFailure: error =>
             {
