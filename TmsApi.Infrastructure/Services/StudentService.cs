@@ -92,10 +92,10 @@ public class StudentService(TmsDbContext db, ILogger<StudentService> logger) : I
                 s.IsActive))
             .FirstOrDefaultAsync(ct); 
     }
-    public async Task<StudentResponseDto> AddAsync(CreateStudentRequest request)
+    public async Task<StudentResponseDto> CreateAsync(CreateStudentRequest request, CancellationToken ct)
     {
-        var existing = await db.Students.FirstOrDefaultAsync(s => s.RegistrationNumber == request.RegistrationNumber);
-        if (existing is not null)
+        var existing = await db.Students.FirstOrDefaultAsync(s => s.RegistrationNumber == request.RegistrationNumber, ct); 
+         if (existing is not null)
         {
             logger.LogWarning("Student {RegistrationNumber} already exists", request.RegistrationNumber);
             return ToResponse(existing);
@@ -109,7 +109,7 @@ public class StudentService(TmsDbContext db, ILogger<StudentService> logger) : I
             IsActive = request.IsActive
         };
         db.Students.Add(student);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         logger.LogInformation("Added student {RegistrationNumber}", student.RegistrationNumber);
         return ToResponse(student);
     }
@@ -136,31 +136,39 @@ public class StudentService(TmsDbContext db, ILogger<StudentService> logger) : I
             .ToListAsync();
     }
 
-    public async Task<bool> DeleteAsync(string id)
+    public async Task<bool> DeleteAsync(
+     int id,
+     CancellationToken ct)
     {
-        Student? student = int.TryParse(id, out var intId)
-            ? await db.Students.FindAsync(intId)
-            : await db.Students.FirstOrDefaultAsync(s => s.RegistrationNumber == id);
+        var student = await db.Students.FindAsync([id], ct);
 
         if (student is null)
         {
-            logger.LogWarning("Delete failed: Student {StudentId} not found", id);
+            logger.LogWarning(
+                "Delete failed: Student {StudentId} not found",
+                id);
+
             return false;
         }
+
         db.Students.Remove(student);
-        await db.SaveChangesAsync();
-        logger.LogInformation("Deleted student {StudentId}", id);
+
+        await db.SaveChangesAsync(ct);
+
+        logger.LogInformation(
+            "Deleted student {StudentId}",
+            id);
+
         return true;
     }
-
 
     private static StudentResponseDto ToResponse(Student s) =>
         new(s.Id, s.RegistrationNumber, s.Name, s.GPA, s.IsActive);
 
-    public async Task<StudentResponseDto?> UpdateAsync(int id, UpdateStudentRequest request)
+    public async Task<StudentResponseDto?> UpdateAsync(int id, UpdateStudentRequest request,CancellationToken ct)
     {
         // 1. Find the student
-        var student = await db.Students.FindAsync(id);
+        var student = await db.Students.FindAsync([id], ct);
         if (student is null)
         {
             logger.LogWarning("Update failed: Student {StudentId} not found", id);
@@ -178,7 +186,7 @@ public class StudentService(TmsDbContext db, ILogger<StudentService> logger) : I
             student.IsActive = request.IsActive.Value;
 
         // 3. Save changes
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(ct);
         logger.LogInformation("Updated student {StudentId}", id);
     
         return ToResponse(student);
