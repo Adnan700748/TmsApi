@@ -93,7 +93,12 @@ builder.Services.AddOptions<PaymentOptions>()
 
 var app = builder.Build();
 
-
+// Auto-migrate and create database if it doesn't exist
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<TmsDbContext>();
+    await dbContext.Database.EnsureCreatedAsync();
+}
 
 app.UseStatusCodePages();
 
