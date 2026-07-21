@@ -50,7 +50,7 @@ Content-Type: application/json
 
 {
     "studentId": 1,
-    "courseCode": "CSE-102"
+    "courseCode": "CSE-101"
 }
 
 //to test Invalid Course Code

@@ -60,15 +60,46 @@ public class StudentController( IStudentService studentService, LinkGenerator li
         return Ok(detail);
     }
 
+    [HttpPost(Name = nameof(CreateStudent))]
+[ProducesResponseType(typeof(StudentResponseDto), StatusCodes.Status201Created)]
+[ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+[EndpointSummary("Create a new student")]
+[EndpointDescription("Creates a new student. Returns 409 if a student with the same registration number already exists.")]
+public async Task<IActionResult> CreateStudent(int id,CreateStudentRequest request, CancellationToken ct)
+{
+    var result = await studentService.CreateAsync(request, ct);
+    
+    // Check if student already existed
+    var existingStudent = await studentService.GetByIdAsync(id,ct);
+    if (existingStudent is not null)
+    {
+        // If the student already existed, return Conflict with the existing student
+        return Conflict(new ProblemDetails
+        {
+            Title = "Student Already Exists",
+            Detail = $"A student with registration number '{request.RegistrationNumber}' already exists.",
+            Status = StatusCodes.Status409Conflict,
+            Extensions =
+            {
+                ["existingStudent"] = existingStudent
+            }
+        });
+    }
+
+    // Return 201 Created with location header
+    return CreatedAtAction(nameof(GetStudent), new { id = result.Id }, result);
+}
+
     [HttpPut("{id:int}", Name = nameof(UpdateStudent))]
     [ProducesResponseType(typeof(StudentResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Update a student")]
     [EndpointDescription("Updates the supplied student fields. Returns 404 if the student does not exist.")]
-    public async Task<IActionResult> UpdateStudent(int id, UpdateStudentRequest request)
+    public async Task<IActionResult> UpdateStudent(int id, UpdateStudentRequest request, CancellationToken ct)
     {
-        var student = await studentService.UpdateAsync(id, request);
+        var student = await studentService.UpdateAsync(id, request,  ct);
 
         if (student is null)
             return NotFound();
@@ -81,9 +112,9 @@ public class StudentController( IStudentService studentService, LinkGenerator li
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Delete a student")]
     [EndpointDescription("Deletes a student. Returns 404 if the student does not exist.")]
-    public async Task<IActionResult> DeleteStudent(int id)
+    public async Task<IActionResult> DeleteStudent(int id,CancellationToken ct)
     {
-        var deleted = await studentService.DeleteAsync(id.ToString());
+        var deleted = await studentService.DeleteAsync(id , ct);
 
         if (!deleted)
             return NotFound();
