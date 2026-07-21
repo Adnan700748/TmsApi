@@ -13,6 +13,7 @@ using TmsApi.Application.Behaviors;
 using MediatR;
 using TmsApi.Api.ExceptionHandlers;
 using FluentValidation;
+using Microsoft.Extensions.Caching.Hybrid;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +26,24 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+// Add HybridCache for stampede protection
+builder.Services.AddHybridCache(options =>
+{
+    options.DefaultEntryOptions = new HybridCacheEntryOptions
+    {
+        Expiration = TimeSpan.FromMinutes(10),        // L2 cache TTL (shared cache)
+        LocalCacheExpiration = TimeSpan.FromMinutes(2) // L1 cache TTL (in-memory)
+    };
+});
+
+// Production-only - leave commented in lab
+// builder.Services.AddStackExchangeRedisCache(options =>
+// {
+//     options.Configuration = builder.Configuration.GetConnectionString("Redis");
+//     options.InstanceName = "tms:";  // IMPORTANT: prefix to avoid collisions
+// });
+//
+// builder.Services.AddHybridCache();  // This will automatically use Redis
 
 // v1/v2 versioning
 builder.Services.AddOpenApi("v1", options =>
