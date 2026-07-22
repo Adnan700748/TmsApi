@@ -26,6 +26,7 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+
 // Add HybridCache for stampede protection
 builder.Services.AddHybridCache(options =>
 {
@@ -35,6 +36,7 @@ builder.Services.AddHybridCache(options =>
         LocalCacheExpiration = TimeSpan.FromMinutes(2) // L1 cache TTL (in-memory)
     };
 });
+
 
 // Production-only - leave commented in lab
 // builder.Services.AddStackExchangeRedisCache(options =>
