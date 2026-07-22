@@ -9,6 +9,14 @@ namespace TmsApi.Infrastructure.Services;
 
 public class CourseService( TmsDbContext context, ILogger<CourseService> logger): ICourseService
 {
+    public async Task<List<Course>> GetAllAsync(
+    CancellationToken ct)
+{
+    return await context.Courses
+        .AsNoTracking()
+        .Include(c => c.Enrollments)
+        .ToListAsync(ct);
+}
     public Task<Course?> GetByCodeAsync(string code, CancellationToken ct)
 {
     return context.Courses
