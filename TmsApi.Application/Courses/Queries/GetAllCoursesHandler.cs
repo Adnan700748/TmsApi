@@ -5,22 +5,13 @@ using TmsApi.Application.Interfaces;
 namespace TmsApi.Application.Courses.Queries;
 
 public class GetAllCoursesHandler(
-    ICourseService courseService)
+    ICachedCourseService cachedCourseService)
     : IRequestHandler<GetAllCoursesQuery, List<CourseResponseDto>>
 {
     public async Task<List<CourseResponseDto>> Handle(
-        GetAllCoursesQuery request,
-        CancellationToken ct)
-    {
-        var courses = await courseService.GetAllAsync(ct);
-
-        return courses
-            .Select(c => new CourseResponseDto(
-                c.Id,
-                c.Code,
-                c.Title,
-                c.MaxCapacity,
-                c.Enrollments.Count))
-            .ToList();
-    }
+    GetAllCoursesQuery request,
+    CancellationToken ct)
+{
+    return await cachedCourseService.GetAllCoursesAsync(ct);
+}
 }
