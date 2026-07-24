@@ -3,6 +3,8 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TmsApi.Application.Courses.Commands;
 using TmsApi.Application.Courses.Queries;
+using TmsApi.Application.DTOs;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace TmsApi.Api.Controllers.V2;
 
@@ -48,4 +50,50 @@ public class CoursesController(IMediator mediator) : ControllerBase
             new { code = course.Code },
             course);
     }
+
+    [HttpPut("{code}")]
+    public async Task<IActionResult> Update(
+        string code,
+        UpdateCourseRequest request,
+        CancellationToken ct)
+    {
+        var command = new UpdateCourseCommand(
+            code,
+            request.Title,
+            request.MaxCapacity);
+
+        var updated = await mediator.Send(command, ct);
+
+        if (!updated)
+            return NotFound();
+
+        return NoContent();
+    }
+
+    [HttpDelete("{code}")]
+    public async Task<IActionResult> Delete(
+        string code,
+        CancellationToken ct)
+    {
+        var deleted = await mediator.Send(
+            new DeleteCourseCommand(code),
+            ct);
+
+        if (!deleted)
+            return NotFound();
+
+        return NoContent();
+    }
+    [HttpGet("search")]
+[EnableRateLimiting("search")]
+public async Task<IActionResult> SearchCourses(
+    [FromQuery] string? term,
+    CancellationToken ct)
+{
+    var results = await mediator.Send(
+        new SearchCoursesQuery(term),
+        ct);
+
+    return Ok(results);
+}
 }
