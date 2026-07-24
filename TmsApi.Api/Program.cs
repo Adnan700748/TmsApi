@@ -127,6 +127,26 @@ builder.Services.AddRateLimiter(options =>
             },
             ct);
     };
+        options.AddConcurrencyLimiter("transcripts", opt =>
+    {
+        // Maximum concurrent transcript requests
+        opt.PermitLimit = 5;
+
+        // Queue up to 20 waiting requests
+        opt.QueueLimit = 20;
+
+        // Serve oldest queued request first
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+    options.AddTokenBucketLimiter("search", opt =>
+{
+    opt.TokenLimit = 10;
+    opt.TokensPerPeriod = 5;
+    opt.ReplenishmentPeriod = TimeSpan.FromSeconds(10);
+    opt.QueueLimit = 2;
+    opt.AutoReplenishment = true;
+});
+
 });
 
 // v1/v2 versioning
