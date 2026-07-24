@@ -82,3 +82,15 @@ Content-Type: application/json
   "studentId": 1,
   "courseCode": "CSE-101"
 }
+
+###
+PUT http://localhost:5187/api/v2/courses/CSE-101
+Content-Type: application/json
+
+{
+    "title": "Advanced Programming",
+    "maxCapacity": 80
+}
+
+###
+DELETE http://localhost:5187/api/v2/courses/CSE-101
