@@ -95,5 +95,6 @@ Content-Type: application/json
 ###
 DELETE http://localhost:5187/api/v2/courses/CSE-101
 
+
 ###
 GET http://localhost:5187/api/v2/courses/search?term=CSE
