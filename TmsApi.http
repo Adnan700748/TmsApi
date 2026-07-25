@@ -98,3 +98,8 @@ DELETE http://localhost:5187/api/v2/courses/CSE-101
 
 ###
 GET http://localhost:5187/api/v2/courses/search?term=CSE
+
+# //to test on powershell
+# 1..50 | ForEach-Object -Parallel {
+# >> Invoke-RestMethod http://localhost:5187/api/v2/courses | Out-Null 
+# >> }-ThrottleLimit 50
