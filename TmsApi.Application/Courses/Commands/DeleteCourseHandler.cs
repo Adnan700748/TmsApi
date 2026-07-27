@@ -1,44 +1,29 @@
 using MediatR;
-using TmsApi.Application.Common;
 using TmsApi.Application.Interfaces;
 
 namespace TmsApi.Application.Courses.Commands;
 
 public class DeleteCourseHandler(
-    ICourseService courseService,
-    ICachedCourseService cachedCourseService)
-    : IRequestHandler<DeleteCourseCommand, Result<bool, CourseError>>
+    ICourseService service,
+    ICachedCourseService cachedService)
+    : IRequestHandler<DeleteCourseCommand, bool>
 {
-    public async Task<Result<bool, CourseError>> Handle(
+    public async Task<bool> Handle(
         DeleteCourseCommand command,
         CancellationToken ct)
     {
-        var existing = await courseService.GetByIdAsync(command.Id, ct);
-
-        if (existing is null)
-        {
-            return Result<bool, CourseError>.Failure(
-                CourseError.NotFound(command.Id));
-        }
-
-        var course = await courseService.GetByCodeAsync(existing.Code, ct);
+        var course = await service.GetByCodeAsync(command.Code, ct);
 
         if (course is null)
-        {
-            return Result<bool, CourseError>.Failure(
-                CourseError.NotFoundByCode(existing.Code));
-        }
+            return false;
 
-        if (course.Enrollments.Any())
-        {
-            return Result<bool, CourseError>.Failure(
-                CourseError.HasEnrollments(command.Id));
-        }
+        var deleted = await service.DeleteAsync(course, ct);
 
-        await courseService.DeleteAsync(course, ct);
+        if (!deleted)
+            return false;
 
-        await cachedCourseService.InvalidateCourseCacheAsync(ct);
+        await cachedService.InvalidateCourseCacheAsync(ct);
 
-        return Result<bool, CourseError>.Success(true);
+        return true;
     }
 }

@@ -1,52 +1,33 @@
 using MediatR;
-using TmsApi.Application.Common;
 using TmsApi.Application.Interfaces;
+using TmsApi.Domain.Entities;
 
 namespace TmsApi.Application.Courses.Commands;
 
 public class UpdateCourseHandler(
-    ICourseService courseService,
-    ICachedCourseService cachedCourseService)
-    : IRequestHandler<UpdateCourseCommand, Result<CourseUpdated, CourseError>>
+    ICourseService service,
+    ICachedCourseService cachedService)
+    : IRequestHandler<UpdateCourseCommand, bool>
 {
-    public async Task<Result<CourseUpdated, CourseError>> Handle(
+    public async Task<bool> Handle(
         UpdateCourseCommand command,
         CancellationToken ct)
     {
-        var existing = await courseService.GetByIdAsync(command.Id, ct);
-
-        if (existing is null)
-        {
-            return Result<CourseUpdated, CourseError>.Failure(
-                CourseError.NotFound(command.Id));
-        }
-
-        if (command.MaxCapacity <= 0)
-        {
-            return Result<CourseUpdated, CourseError>.Failure(
-                CourseError.InvalidCapacity(command.MaxCapacity));
-        }
-
-        var course = await courseService.GetByCodeAsync(existing.Code, ct);
+        var course = await service.GetByCodeAsync(command.Code, ct);
 
         if (course is null)
-        {
-            return Result<CourseUpdated, CourseError>.Failure(
-                CourseError.NotFoundByCode(existing.Code));
-        }
+            return false;
 
         course.Title = command.Title;
         course.MaxCapacity = command.MaxCapacity;
 
-        await courseService.UpdateAsync(course, ct);
+        var updated = await service.UpdateAsync(course, ct);
 
-        await cachedCourseService.InvalidateCourseCacheAsync(ct);
+        if (updated is null)
+            return false;
 
-        return Result<CourseUpdated, CourseError>.Success(
-            new CourseUpdated(
-                course.Id,
-                course.Code,
-                course.Title,
-                course.MaxCapacity));
+        await cachedService.InvalidateCourseCacheAsync(ct);
+
+        return true;
     }
 }
