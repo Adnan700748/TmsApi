@@ -247,6 +247,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseRateLimiter();
+// Enables the CORS policy for incoming requests.
+app.UseCors("AllowAngular");
 
 app.UseAuthentication();
 
