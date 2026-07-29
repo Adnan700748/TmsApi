@@ -30,6 +30,17 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+// Registers a CORS policy that allows the Angular application
+// running on localhost:4200 to access this API.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 // Add HybridCache for stampede protection
 builder.Services.AddHybridCache(options =>
@@ -236,6 +247,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseRateLimiter();
+// Enables the CORS policy for incoming requests.
+app.UseCors("AllowAngular");
 
 app.UseAuthentication();
 
