@@ -7,6 +7,8 @@ public class Enrollment
     public decimal? Grade { get; set; }
     public DateTime EnrolledAt { get; set; } = DateTime.UtcNow;
 
+     public string Status { get; set; } = "Pending";
+
     public bool IsArchived { get; set;} 
     public int year{ get; set;}
     public Student Student { get; set; } = null!;
