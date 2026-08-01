@@ -3,7 +3,9 @@ using MediatR;
 
 namespace TmsApi.Application.Behaviors;
 
-public class ValidationBehavior<TRequest, TResponse>( IEnumerable<IValidator<TRequest>> validators) : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
+public class ValidationBehavior<TRequest, TResponse>(
+    IEnumerable<IValidator<TRequest>> validators)
+    : IPipelineBehavior<TRequest, TResponse> where TRequest : notnull
 {
     public async Task<TResponse> Handle(
         TRequest request,
@@ -15,11 +17,14 @@ public class ValidationBehavior<TRequest, TResponse>( IEnumerable<IValidator<TRe
 
         var context = new ValidationContext<TRequest>(request);
 
-        var failures = validators
-            .Select(v => v.Validate(context))
-            .SelectMany(result => result.Errors)
-            .Where(f => f is not null)
-            .ToList();
+        // Use ValidateAsync instead of Validate (async version)
+        var failures = new List<FluentValidation.Results.ValidationFailure>();
+
+        foreach (var validator in validators)
+        {
+            var result = await validator.ValidateAsync(context, ct);
+            failures.AddRange(result.Errors);
+        }
 
         if (failures.Count > 0)
             throw new ValidationException(failures);
