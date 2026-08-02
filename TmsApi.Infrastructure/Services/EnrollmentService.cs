@@ -41,6 +41,34 @@ public async Task<IReadOnlyList<Enrollment>> GetByStudentIdAsync(
         .ToListAsync(ct);
 }
 
+public async Task<IReadOnlyList<Enrollment>> GetAllAsync(
+    CancellationToken ct)
+{
+    return await context.Enrollments
+        .Include(e => e.Student)
+        .Include(e => e.Course)
+        .AsNoTracking()
+        .ToListAsync(ct);
+}
+
+public async Task ApproveAsync(
+    int enrollmentId,
+    CancellationToken ct)
+{
+    var enrollment = await context.Enrollments
+        .FirstOrDefaultAsync(e => e.Id == enrollmentId, ct);
+
+    if (enrollment is null)
+    {
+        throw new KeyNotFoundException(
+            $"Enrollment {enrollmentId} was not found.");
+    }
+
+    enrollment.Status = "Approved";
+
+    await context.SaveChangesAsync(ct);
+}
+
 public Task<EnrollmentResponseDto?> GetByIdAsync( int courseId, int id, CancellationToken ct)
     {
         return context.Enrollments
