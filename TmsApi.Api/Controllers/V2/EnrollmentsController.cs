@@ -44,38 +44,26 @@ public class EnrollmentsController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("{studentId}/schedule")]
-    public async Task<IActionResult> GetSchedule(
-        int studentId,
-        CancellationToken ct)
+    public async Task<IActionResult> GetSchedule(int studentId, CancellationToken ct)
     {
-        var schedule = await mediator.Send(
-            new GetStudentScheduleQuery(studentId), ct);
+        var schedule = await mediator.Send(new GetStudentScheduleQuery(studentId), ct);
 
         return Ok(schedule);
     }
 
     [HttpGet]
-public async Task<IActionResult> GetAll(
-    CancellationToken ct)
-{
-    var enrollments = await mediator.Send(
-        new GetAllEnrollmentsQuery(),
-        ct);
-
-    return Ok(enrollments);
-}
-
-[HttpPost("{id}/approve")]
-public async Task<IActionResult> Approve(
-    int id,
-    CancellationToken ct)
-{
-    await mediator.Send(
-        new ApproveEnrollmentCommand(id),
-        ct);
-
-    return NoContent();
-}
-
-
+    public async Task<IActionResult> GetAll(CancellationToken ct)
+    {
+        var enrollments = await mediator.Send(new GetAllEnrollmentsQuery(), ct);
+        
+        return Ok(enrollments);
+    }
+    
+    [HttpPost("{id}/approve")]
+    public async Task<IActionResult> Approve(int id, CancellationToken ct)
+    {
+        await mediator.Send(new ApproveEnrollmentCommand(id), ct);
+        
+        return NoContent();
+    }
 }
