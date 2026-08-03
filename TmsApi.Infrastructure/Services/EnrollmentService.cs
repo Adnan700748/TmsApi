@@ -51,22 +51,46 @@ public async Task<IReadOnlyList<Enrollment>> GetAllAsync(
         .ToListAsync(ct);
 }
 
-public async Task ApproveAsync(
-    int enrollmentId,
+public async Task<bool> ApproveAsync(
+    int id,
     CancellationToken ct)
 {
     var enrollment = await context.Enrollments
-        .FirstOrDefaultAsync(e => e.Id == enrollmentId, ct);
+        .FirstOrDefaultAsync(e => e.Id == id, ct);
 
     if (enrollment is null)
-    {
-        throw new KeyNotFoundException(
-            $"Enrollment {enrollmentId} was not found.");
-    }
+        return false;
 
     enrollment.Status = "Approved";
 
     await context.SaveChangesAsync(ct);
+
+    logger.LogInformation(
+        "Enrollment {EnrollmentId} approved.",
+        id);
+
+    return true;
+}
+
+public async Task<bool> RejectAsync(
+    int id,
+    CancellationToken ct)
+{
+    var enrollment = await context.Enrollments
+        .FirstOrDefaultAsync(e => e.Id == id, ct);
+
+    if (enrollment is null)
+        return false;
+
+    enrollment.Status = "Rejected";
+
+    await context.SaveChangesAsync(ct);
+
+    logger.LogInformation(
+        "Enrollment {EnrollmentId} rejected.",
+        id);
+
+    return true;
 }
 
 public Task<EnrollmentResponseDto?> GetByIdAsync( int courseId, int id, CancellationToken ct)
