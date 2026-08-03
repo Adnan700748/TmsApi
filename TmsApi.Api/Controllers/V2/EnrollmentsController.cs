@@ -59,11 +59,29 @@ public class EnrollmentsController(IMediator mediator) : ControllerBase
         return Ok(enrollments);
     }
     
-    [HttpPost("{id}/approve")]
-    public async Task<IActionResult> Approve(int id, CancellationToken ct)
-    {
-        await mediator.Send(new ApproveEnrollmentCommand(id), ct);
-        
-        return NoContent();
-    }
+    [HttpPost("{enrollmentId}/approve")]
+public async Task<IActionResult> Approve(
+    int enrollmentId,
+    CancellationToken ct)
+{
+    await mediator.Send(
+        new ApproveEnrollmentCommand(enrollmentId),
+        ct);
+
+    return NoContent();
+}
+
+[HttpPost("{enrollmentId}/reject")]
+public async Task<IActionResult> Reject(
+    int enrollmentId,
+    CancellationToken ct)
+{
+    await mediator.Send(
+        new RejectEnrollmentCommand(enrollmentId),
+        ct);
+
+    return NoContent();
+}
+
+
 }

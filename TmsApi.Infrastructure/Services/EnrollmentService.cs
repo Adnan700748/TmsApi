@@ -51,15 +51,18 @@ public async Task<IReadOnlyList<Enrollment>> GetAllAsync(
         .ToListAsync(ct);
 }
 
-public async Task<bool> ApproveAsync(
-    int id,
+public async Task ApproveAsync(
+    int enrollmentId,
     CancellationToken ct)
 {
     var enrollment = await context.Enrollments
-        .FirstOrDefaultAsync(e => e.Id == id, ct);
+        .FirstOrDefaultAsync(e => e.Id == enrollmentId, ct);
 
     if (enrollment is null)
-        return false;
+    {
+        throw new InvalidOperationException(
+            $"Enrollment {enrollmentId} was not found.");
+    }
 
     enrollment.Status = "Approved";
 
@@ -67,20 +70,21 @@ public async Task<bool> ApproveAsync(
 
     logger.LogInformation(
         "Enrollment {EnrollmentId} approved.",
-        id);
-
-    return true;
+        enrollmentId);
 }
 
-public async Task<bool> RejectAsync(
-    int id,
+public async Task RejectAsync(
+    int enrollmentId,
     CancellationToken ct)
 {
     var enrollment = await context.Enrollments
-        .FirstOrDefaultAsync(e => e.Id == id, ct);
+        .FirstOrDefaultAsync(e => e.Id == enrollmentId, ct);
 
     if (enrollment is null)
-        return false;
+    {
+        throw new InvalidOperationException(
+            $"Enrollment {enrollmentId} was not found.");
+    }
 
     enrollment.Status = "Rejected";
 
@@ -88,9 +92,7 @@ public async Task<bool> RejectAsync(
 
     logger.LogInformation(
         "Enrollment {EnrollmentId} rejected.",
-        id);
-
-    return true;
+        enrollmentId);
 }
 
 public Task<EnrollmentResponseDto?> GetByIdAsync( int courseId, int id, CancellationToken ct)

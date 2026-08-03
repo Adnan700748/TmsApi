@@ -14,6 +14,10 @@ public interface IEnrollmentService
     Task<IReadOnlyList<Enrollment>> GetByStudentIdAsync(int studentId, CancellationToken ct);
     Task<IReadOnlyList<Enrollment>> GetAllAsync(CancellationToken ct);
     //Task ApproveAsync(int enrollmentId, CancellationToken ct);
-    Task<bool> ApproveAsync(int id, CancellationToken ct);
-    Task<bool> RejectAsync(int id, CancellationToken ct);
-}
+   Task ApproveAsync(
+    int enrollmentId,
+    CancellationToken ct);
+
+Task RejectAsync(
+    int enrollmentId,
+    CancellationToken ct);}
