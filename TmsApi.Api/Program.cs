@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 using TmsApi.Api.RateLimiting;
 using TmsApi.Infrastructure.Transcripts;
+using System.Threading.Channels;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -215,7 +216,11 @@ builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IAssessmentService, AssessmentService>();
 builder.Services.AddSingleton<ITranscriptStatusStore, InMemoryTranscriptStatusStore>();
 
-
+builder.Services.AddSingleton(Channel.CreateBounded<TranscriptRequest>(
+        new BoundedChannelOptions(100)
+        {
+            FullMode = BoundedChannelFullMode.Wait
+        }));
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
