@@ -9,15 +9,10 @@ public class SignalRTranscriptNotificationService(
     IHubContext<TmsHub, ITmsHubClient> hubContext)
     : ITranscriptNotificationService
 {
-    public async Task NotifyTranscriptReadyAsync(
-        int studentId,
-        string reportId,
-        string downloadUrl)
+    public async Task NotifyTranscriptReadyAsync(int studentId, string reportId, string downloadUrl)
     {
         await hubContext.Clients
             .Group(GroupNames.Student(studentId.ToString()))
-            .ReceiveTranscriptReady(
-                reportId,
-                downloadUrl);
+            .ReceiveTranscriptReady(reportId, downloadUrl);
     }
 }
