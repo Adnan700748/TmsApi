@@ -31,6 +31,7 @@ public class TmsHub : Hub<ITmsHubClient>
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
+        
         // SignalR automatically removes the connection from every group.
         await base.OnDisconnectedAsync(exception);
     }
