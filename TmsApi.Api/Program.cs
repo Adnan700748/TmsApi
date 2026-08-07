@@ -26,7 +26,6 @@ using TmsApi.Api.Hubs;
 using TmsApi.Application.Notifications;
 using TmsApi.Api.Notifications;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers(options =>
