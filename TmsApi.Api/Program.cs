@@ -18,7 +18,13 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 using TmsApi.Api.RateLimiting;
-
+using TmsApi.Infrastructure.Transcripts;
+using System.Threading.Channels;
+using TmsApi.Infrastructure.Workers;
+using TmsApi.Application.Transcripts;
+using TmsApi.Api.Hubs;
+using TmsApi.Application.Notifications;
+using TmsApi.Api.Notifications;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +32,10 @@ builder.Services.AddControllers(options =>
 {
     options.Filters.Add<AuditLogFilter>();
 });
+
+builder.Services.AddSignalR();
+
+
 builder.Services.AddProblemDetails();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -212,8 +222,15 @@ builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ICachedCourseService, CachedCourseService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IAssessmentService, AssessmentService>();
+builder.Services.AddSingleton<ITranscriptStatusStore, InMemoryTranscriptStatusStore>();
+builder.Services.AddHostedService<TranscriptWorker>();
+builder.Services.AddSingleton<ITranscriptNotificationService, SignalRTranscriptNotificationService>();
 
-
+builder.Services.AddSingleton(Channel.CreateBounded<TranscriptRequest>(
+        new BoundedChannelOptions(100)
+        {
+            FullMode = BoundedChannelFullMode.Wait
+        }));
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -258,6 +275,8 @@ app.UseMiddleware<V1DeprecationMiddleware>();
 
 
 app.MapControllers();
+
+app.MapHub<TmsHub>("/hubs/tms");
 
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new

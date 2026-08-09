@@ -60,13 +60,39 @@ public async Task ApproveAsync(
 
     if (enrollment is null)
     {
-        throw new KeyNotFoundException(
+        throw new InvalidOperationException(
             $"Enrollment {enrollmentId} was not found.");
     }
 
     enrollment.Status = "Approved";
 
     await context.SaveChangesAsync(ct);
+
+    logger.LogInformation(
+        "Enrollment {EnrollmentId} approved.",
+        enrollmentId);
+}
+
+public async Task RejectAsync(
+    int enrollmentId,
+    CancellationToken ct)
+{
+    var enrollment = await context.Enrollments
+        .FirstOrDefaultAsync(e => e.Id == enrollmentId, ct);
+
+    if (enrollment is null)
+    {
+        throw new InvalidOperationException(
+            $"Enrollment {enrollmentId} was not found.");
+    }
+
+    enrollment.Status = "Rejected";
+
+    await context.SaveChangesAsync(ct);
+
+    logger.LogInformation(
+        "Enrollment {EnrollmentId} rejected.",
+        enrollmentId);
 }
 
 public Task<EnrollmentResponseDto?> GetByIdAsync( int courseId, int id, CancellationToken ct)
