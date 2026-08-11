@@ -42,13 +42,24 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // Registers a CORS policy that allows the Angular application
 // running on localhost:4200 to access this API.
+
+// Load allowed origins from appsettings.Development.json
+var allowedOrigins =
+    builder.Configuration
+        .GetSection("AllowedOrigins")
+        .Get<string[]>()
+    ?? ["http://localhost:4200"];
+
+// Register the CORS policy in the Dependency Injection container
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngular", policy =>
+    options.AddPolicy("TmsClient", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials() // Vital for HttpOnly auth cookies in Session 2
+              .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
     });
 });
 
@@ -264,8 +275,11 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseRateLimiter();
+
 // Enables the CORS policy for incoming requests.
-app.UseCors("AllowAngular");
+// CRITICAL: Middleware order matters!
+// UseRouting-> UseCors-> UseAuthentication-> UseAuthorization
+app.UseCors("TmsClient");
 
 app.UseAuthentication();
 
