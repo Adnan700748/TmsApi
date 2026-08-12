@@ -25,6 +25,7 @@ using TmsApi.Application.Transcripts;
 using TmsApi.Api.Hubs;
 using TmsApi.Application.Notifications;
 using TmsApi.Api.Notifications;
+using Microsoft.AspNetCore.Antiforgery;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,15 +41,32 @@ builder.Services.AddProblemDetails();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+//When validating the antiforgery token, look for it in the X-XSRF-TOKEN request heade
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+});
+
 // Registers a CORS policy that allows the Angular application
 // running on localhost:4200 to access this API.
+
+// Load allowed origins from appsettings.Development.json
+var allowedOrigins =
+    builder.Configuration
+        .GetSection("AllowedOrigins")
+        .Get<string[]>()
+    ?? ["http://localhost:4200"];
+
+// Register the CORS policy in the Dependency Injection container
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngular", policy =>
+    options.AddPolicy("TmsClient", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials() // Vital for HttpOnly auth cookies in Session 2
+              .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
     });
 });
 
@@ -264,15 +282,45 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseRateLimiter();
+
 // Enables the CORS policy for incoming requests.
-app.UseCors("AllowAngular");
+// CRITICAL: Middleware order matters!
+// UseRouting-> UseCors-> UseAuthentication-> UseAuthorization
+app.UseCors("TmsClient");
 
 app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.UseMiddleware<V1DeprecationMiddleware>();
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated == true ||
+        context.Request.Cookies.ContainsKey("tms_auth"))
+    {
+        var antiforgery =
+            context.RequestServices
+                .GetRequiredService<IAntiforgery>();
 
+        var tokens = antiforgery.GetAndStoreTokens(context);
+
+        context.Response.Cookies.Append(
+            "XSRF-TOKEN",
+            tokens.RequestToken!,
+            new CookieOptions
+            {
+                // Angular JavaScript MUST be able to read this.
+                HttpOnly = false,
+
+                Secure = !builder.Environment.IsDevelopment(),
+
+                SameSite = SameSiteMode.Strict
+            });
+    }
+
+    await next(context);
+});
+
+app.UseMiddleware<V1DeprecationMiddleware>();
 
 app.MapControllers();
 
