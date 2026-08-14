@@ -259,7 +259,7 @@ builder.Host.UseDefaultServiceProvider(options =>
 builder.Services.AddOptions<PaymentOptions>()
     .BindConfiguration("Payments")
     .ValidateDataAnnotations()
-    .ValidateOnStart();
+    .ValidateOnStart();   
 
 var app = builder.Build();
 
