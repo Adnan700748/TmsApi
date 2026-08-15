@@ -324,7 +324,7 @@ app.UseMiddleware<V1DeprecationMiddleware>();
 
 app.MapControllers();
 
-app.MapHub<TmsHub>("/hubs/tms");
+app.MapHub<TmsHub>("/hubs/tms").RequireCors("TmsClient");
 
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new
