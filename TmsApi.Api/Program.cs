@@ -270,7 +270,7 @@ using (var scope = app.Services.CreateScope())
     await dbContext.Database.EnsureCreatedAsync();
 }
 
-app.UseStatusCodePages();
+app.UseStatusCodePages(); // Converts 4xx/5xx responses into ProblemDetails
 
 app.UseExceptionHandler();
 
