@@ -27,6 +27,7 @@ using TmsApi.Application.Notifications;
 using TmsApi.Api.Notifications;
 using Microsoft.AspNetCore.Antiforgery;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers(options =>
@@ -326,6 +327,30 @@ app.MapControllers();
 
 app.MapHub<TmsHub>("/hubs/tms").RequireCors("TmsClient");
 
+app.MapGet("/api/dev/crypto-test", () =>
+{
+    var service = new CryptoDemoService();
+
+    var hash1 = service.HashUserPassword("Password123!");
+    var hash2 = service.HashUserPassword("Password123!");
+
+    var match1 = service.VerifyUserPassword(
+        "Password123!",
+        hash1);
+
+    var match2 = service.VerifyUserPassword(
+        "Password123!",
+        hash2);
+
+    return Results.Ok(new
+    {
+        hash1,
+        hash2,
+        hashesAreDifferent = hash1 != hash2,
+        match1,
+        match2
+    });
+});
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new
 {
