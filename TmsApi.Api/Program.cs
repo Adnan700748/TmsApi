@@ -26,6 +26,9 @@ using TmsApi.Api.Hubs;
 using TmsApi.Application.Notifications;
 using TmsApi.Api.Notifications;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Identity;
+using TmsApi.Domain.Entities;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -216,6 +219,24 @@ builder.Services.AddDbContext<TmsDbContext>(options => options.UseNpgsql(builder
                                                               .LogTo(Console.WriteLine, LogLevel.Information)   // Log SQL to output window
                                                               .EnableSensitiveDataLogging());  // Show parameters in query logs (dev only)
 
+builder.Services
+    .AddIdentityCore<TmsUser>(options =>
+    {
+        // Enterprise Password Policy
+        options.Password.RequiredLength = 12;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireDigit = true;
+        options.Password.RequireNonAlphanumeric = true;
+
+        // Brute-Force Lockout Protection
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan =
+            TimeSpan.FromMinutes(15);
+        options.Lockout.AllowedForNewUsers = true;
+    })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<TmsDbContext>();
+
 // registering the MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(EnrollStudentHandler).Assembly));
 
@@ -326,6 +347,30 @@ app.MapControllers();
 
 app.MapHub<TmsHub>("/hubs/tms").RequireCors("TmsClient");
 
+app.MapGet("/api/dev/crypto-test", () =>
+{
+    var service = new CryptoDemoService();
+
+    var hash1 = service.HashUserPassword("Password123!");
+    var hash2 = service.HashUserPassword("Password123!");
+
+    var match1 = service.VerifyUserPassword(
+        "Password123!",
+        hash1);
+
+    var match2 = service.VerifyUserPassword(
+        "Password123!",
+        hash2);
+
+    return Results.Ok(new
+    {
+        hash1,
+        hash2,
+        hashesAreDifferent = hash1 != hash2,
+        match1,
+        match2
+    });
+});
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new
 {
