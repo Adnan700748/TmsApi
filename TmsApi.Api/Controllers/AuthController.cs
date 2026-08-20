@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using TmsApi.Domain.Entities;
+using TmsApi.Infrastructure.Identity;
 
 namespace TmsApi.Api.Controllers;
 
@@ -35,7 +35,7 @@ public class AuthController : ControllerBase
 
         if (existingUser != null)
         {
-            // Prevent account enumeration.
+            // Prevent account enumeration
             return Ok(new
             {
                 message = "Registration request received."
@@ -50,23 +50,19 @@ public class AuthController : ControllerBase
             LastName = request.LastName
         };
 
-        var result =
-            await _userManager.CreateAsync(
-                user,
-                request.Password);
+        var result = await _userManager.CreateAsync(
+            user,
+            request.Password);
 
         if (!result.Succeeded)
         {
             var errors = result.Errors
                 .Select(e => e.Description);
 
-            return BadRequest(new
-            {
-                errors
-            });
+            return BadRequest(new { errors });
         }
 
-        // Ensure requested role exists.
+        // Ensure requested role exists
         if (!await _roleManager.RoleExistsAsync(request.Role))
         {
             await _roleManager.CreateAsync(
@@ -127,7 +123,7 @@ public class AuthController : ControllerBase
             });
         }
 
-        // Reset failed-attempt counter after successful login.
+        // Reset failed attempt counter after successful login
         await _userManager.ResetAccessFailedCountAsync(user);
 
         return Ok(new

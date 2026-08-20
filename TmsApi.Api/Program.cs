@@ -28,6 +28,8 @@ using TmsApi.Api.Notifications;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 using TmsApi.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+using TmsApi.Infrastructure.Identity;
 
 
 var builder = WebApplication.CreateBuilder(args);
