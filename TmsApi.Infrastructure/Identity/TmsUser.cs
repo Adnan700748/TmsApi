@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace TmsApi.Domain.Entities;
+namespace TmsApi.Infrastructure.Identity;
 
 public class TmsUser : IdentityUser
 {

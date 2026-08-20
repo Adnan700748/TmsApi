@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using TmsApi.Infrastructure.Identity;
 using TmsApi.Domain.Entities;
 
 namespace TmsApi.Infrastructure.Persistence;
