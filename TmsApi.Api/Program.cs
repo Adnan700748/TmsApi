@@ -32,6 +32,8 @@ using TmsApi.Infrastructure.Identity;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using TmsApi.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 
 
@@ -260,6 +262,8 @@ builder.Services
 builder.Services.AddAuthorization();
 
 
+
+
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
@@ -314,6 +318,12 @@ builder.Services.AddAuthentication(options =>
                 builder.Configuration["Jwt:Key"]!))
     };
 });
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("CanEditCourse", policy =>
+        policy.Requirements.Add(new CourseInstructorRequirement()));
+
+builder.Services.AddSingleton<IAuthorizationHandler, CourseInstructorHandler>();
 
 var app = builder.Build();
 
