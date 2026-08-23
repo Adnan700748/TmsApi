@@ -26,6 +26,16 @@ using TmsApi.Api.Hubs;
 using TmsApi.Application.Notifications;
 using TmsApi.Api.Notifications;
 using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Identity;
+using TmsApi.Domain.Entities;
+using TmsApi.Infrastructure.Identity;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using TmsApi.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -216,6 +226,24 @@ builder.Services.AddDbContext<TmsDbContext>(options => options.UseNpgsql(builder
                                                               .LogTo(Console.WriteLine, LogLevel.Information)   // Log SQL to output window
                                                               .EnableSensitiveDataLogging());  // Show parameters in query logs (dev only)
 
+builder.Services
+    .AddIdentityCore<TmsUser>(options =>
+    {
+        // Enterprise Password Policy
+        options.Password.RequiredLength = 12;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireDigit = true;
+        options.Password.RequireNonAlphanumeric = true;
+
+        // Brute-Force Lockout Protection
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan =
+            TimeSpan.FromMinutes(15);
+        options.Lockout.AllowedForNewUsers = true;
+    })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<TmsDbContext>();
+
 // registering the MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(EnrollStudentHandler).Assembly));
 
@@ -232,6 +260,8 @@ builder.Services
     .AddAuthentication("Training")
     .AddScheme<AuthenticationSchemeOptions, TrainingAuthHandler>("Training", null);
 builder.Services.AddAuthorization();
+
+
 
 
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
@@ -259,7 +289,41 @@ builder.Host.UseDefaultServiceProvider(options =>
 builder.Services.AddOptions<PaymentOptions>()
     .BindConfiguration("Payments")
     .ValidateDataAnnotations()
-    .ValidateOnStart();   
+    .ValidateOnStart();
+
+builder.Services.AddScoped<TokenService>();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme =
+        JwtBearerDefaults.AuthenticationScheme;
+
+    options.DefaultChallengeScheme =
+        JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(
+                builder.Configuration["Jwt:Key"]!))
+    };
+});
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("CanEditCourse", policy =>
+        policy.Requirements.Add(new CourseInstructorRequirement()));
+
+builder.Services.AddSingleton<IAuthorizationHandler, CourseInstructorHandler>();
 
 var app = builder.Build();
 
@@ -270,7 +334,7 @@ using (var scope = app.Services.CreateScope())
     await dbContext.Database.EnsureCreatedAsync();
 }
 
-app.UseStatusCodePages();
+app.UseStatusCodePages(); // Converts 4xx/5xx responses into ProblemDetails
 
 app.UseExceptionHandler();
 
@@ -324,8 +388,32 @@ app.UseMiddleware<V1DeprecationMiddleware>();
 
 app.MapControllers();
 
-app.MapHub<TmsHub>("/hubs/tms");
+app.MapHub<TmsHub>("/hubs/tms").RequireCors("TmsClient");
 
+app.MapGet("/api/dev/crypto-test", () =>
+{
+    var service = new CryptoDemoService();
+
+    var hash1 = service.HashUserPassword("Password123!");
+    var hash2 = service.HashUserPassword("Password123!");
+
+    var match1 = service.VerifyUserPassword(
+        "Password123!",
+        hash1);
+
+    var match2 = service.VerifyUserPassword(
+        "Password123!",
+        hash2);
+
+    return Results.Ok(new
+    {
+        hash1,
+        hash2,
+        hashesAreDifferent = hash1 != hash2,
+        match1,
+        match2
+    });
+});
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new
 {
