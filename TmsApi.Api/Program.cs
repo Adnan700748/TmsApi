@@ -102,6 +102,13 @@ builder.Services.AddHybridCache(options =>
 
 builder.Services.AddRateLimiter(options =>
 {
+    options.AddFixedWindowLimiter("AuthLimiter", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
+
     options.GlobalLimiter =
         PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
         {
