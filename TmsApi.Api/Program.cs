@@ -334,6 +334,26 @@ builder.Services.AddSingleton<IAuthorizationHandler, CourseInstructorHandler>();
 
 var app = builder.Build();
 
+app.Use(async (context, next) =>
+{
+    // Prevent MIME type sniffing
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+
+    // Prevent clickjacking (X-Frame-Options)
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+
+    // Control referrer information
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+
+    // Content Security Policy
+    context.Response.Headers.Append(
+        "Content-Security-Policy",
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';"
+    );
+
+    await next();
+});
+
 // Auto-migrate and create database if it doesn't exist
 using (var scope = app.Services.CreateScope())
 {
