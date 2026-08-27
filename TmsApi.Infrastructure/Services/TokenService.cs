@@ -38,13 +38,13 @@ public class TokenService
         var creds = new SigningCredentials(
             key,
             SecurityAlgorithms.HmacSha256);
+        var expiryMinutes = _config.GetValue<int>("Jwt:ExpiryMinutes", 15);
 
         var token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],
             audience: _config["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(
-                int.Parse(_config["Jwt:ExpiryMinutes"]!)),
+            expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
             signingCredentials: creds
         );
 
