@@ -18,6 +18,23 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 using TmsApi.Api.RateLimiting;
+using TmsApi.Infrastructure.Transcripts;
+using System.Threading.Channels;
+using TmsApi.Infrastructure.Workers;
+using TmsApi.Application.Transcripts;
+using TmsApi.Api.Hubs;
+using TmsApi.Application.Notifications;
+using TmsApi.Api.Notifications;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Identity;
+using TmsApi.Domain.Entities;
+using TmsApi.Infrastructure.Identity;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using TmsApi.Api.Authorization;
+using Microsoft.AspNetCore.Authorization;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,19 +43,40 @@ builder.Services.AddControllers(options =>
 {
     options.Filters.Add<AuditLogFilter>();
 });
+
+builder.Services.AddSignalR();
+
+
 builder.Services.AddProblemDetails();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+//When validating the antiforgery token, look for it in the X-XSRF-TOKEN request heade
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+});
+
 // Registers a CORS policy that allows the Angular application
 // running on localhost:4200 to access this API.
+
+// Load allowed origins from appsettings.Development.json
+var allowedOrigins =
+    builder.Configuration
+        .GetSection("AllowedOrigins")
+        .Get<string[]>()
+    ?? ["http://localhost:4200"];
+
+// Register the CORS policy in the Dependency Injection container
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAngular", policy =>
+    options.AddPolicy("TmsClient", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials() // Vital for HttpOnly auth cookies in Session 2
+              .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
     });
 });
 
@@ -64,6 +102,13 @@ builder.Services.AddHybridCache(options =>
 
 builder.Services.AddRateLimiter(options =>
 {
+    options.AddFixedWindowLimiter("AuthLimiter", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
+
     options.GlobalLimiter =
         PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
         {
@@ -188,6 +233,24 @@ builder.Services.AddDbContext<TmsDbContext>(options => options.UseNpgsql(builder
                                                               .LogTo(Console.WriteLine, LogLevel.Information)   // Log SQL to output window
                                                               .EnableSensitiveDataLogging());  // Show parameters in query logs (dev only)
 
+builder.Services
+    .AddIdentityCore<TmsUser>(options =>
+    {
+        // Enterprise Password Policy
+        options.Password.RequiredLength = 12;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireDigit = true;
+        options.Password.RequireNonAlphanumeric = true;
+
+        // Brute-Force Lockout Protection
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan =
+            TimeSpan.FromMinutes(15);
+        options.Lockout.AllowedForNewUsers = true;
+    })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<TmsDbContext>();
+
 // registering the MediatR
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(EnrollStudentHandler).Assembly));
 
@@ -206,14 +269,23 @@ builder.Services
 builder.Services.AddAuthorization();
 
 
+
+
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<ICachedCourseService, CachedCourseService>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
 builder.Services.AddScoped<IAssessmentService, AssessmentService>();
+builder.Services.AddSingleton<ITranscriptStatusStore, InMemoryTranscriptStatusStore>();
+builder.Services.AddHostedService<TranscriptWorker>();
+builder.Services.AddSingleton<ITranscriptNotificationService, SignalRTranscriptNotificationService>();
 
-
+builder.Services.AddSingleton(Channel.CreateBounded<TranscriptRequest>(
+        new BoundedChannelOptions(100)
+        {
+            FullMode = BoundedChannelFullMode.Wait
+        }));
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -226,7 +298,61 @@ builder.Services.AddOptions<PaymentOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+builder.Services.AddScoped<TokenService>();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme =
+        JwtBearerDefaults.AuthenticationScheme;
+
+    options.DefaultChallengeScheme =
+        JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(
+                builder.Configuration["Jwt:Key"]!))
+    };
+});
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("CanEditCourse", policy =>
+        policy.Requirements.Add(new CourseInstructorRequirement()));
+
+builder.Services.AddSingleton<IAuthorizationHandler, CourseInstructorHandler>();
+
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    // Prevent MIME type sniffing
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+
+    // Prevent clickjacking (X-Frame-Options)
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+
+    // Control referrer information
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+
+    // Content Security Policy
+    context.Response.Headers.Append(
+        "Content-Security-Policy",
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+    );
+
+    await next();
+});
 
 // Auto-migrate and create database if it doesn't exist
 using (var scope = app.Services.CreateScope())
@@ -235,7 +361,7 @@ using (var scope = app.Services.CreateScope())
     await dbContext.Database.EnsureCreatedAsync();
 }
 
-app.UseStatusCodePages();
+app.UseStatusCodePages(); // Converts 4xx/5xx responses into ProblemDetails
 
 app.UseExceptionHandler();
 
@@ -247,18 +373,74 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseRateLimiter();
+
 // Enables the CORS policy for incoming requests.
-app.UseCors("AllowAngular");
+// CRITICAL: Middleware order matters!
+// UseRouting-> UseCors-> UseAuthentication-> UseAuthorization
+app.UseCors("TmsClient");
 
 app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.UseMiddleware<V1DeprecationMiddleware>();
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated == true ||
+        context.Request.Cookies.ContainsKey("tms_auth"))
+    {
+        var antiforgery =
+            context.RequestServices
+                .GetRequiredService<IAntiforgery>();
 
+        var tokens = antiforgery.GetAndStoreTokens(context);
+
+        context.Response.Cookies.Append(
+            "XSRF-TOKEN",
+            tokens.RequestToken!,
+            new CookieOptions
+            {
+                // Angular JavaScript MUST be able to read this.
+                HttpOnly = false,
+
+                Secure = !builder.Environment.IsDevelopment(),
+
+                SameSite = SameSiteMode.Strict
+            });
+    }
+
+    await next(context);
+});
+
+app.UseMiddleware<V1DeprecationMiddleware>();
 
 app.MapControllers();
 
+app.MapHub<TmsHub>("/hubs/tms").RequireCors("TmsClient");
+
+app.MapGet("/api/dev/crypto-test", () =>
+{
+    var service = new CryptoDemoService();
+
+    var hash1 = service.HashUserPassword("Password123!");
+    var hash2 = service.HashUserPassword("Password123!");
+
+    var match1 = service.VerifyUserPassword(
+        "Password123!",
+        hash1);
+
+    var match2 = service.VerifyUserPassword(
+        "Password123!",
+        hash2);
+
+    return Results.Ok(new
+    {
+        hash1,
+        hash2,
+        hashesAreDifferent = hash1 != hash2,
+        match1,
+        match2
+    });
+});
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new
 {
