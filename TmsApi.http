@@ -36,3 +36,70 @@ Accept: application/json
 GET  {{TmsApi_HostAddress}}/api/enrollments/{Id}
 X-Training-User: Adnan
 Accept: application/json
+
+###
+GET http://localhost:5187/api/v1/courses
+
+###
+GET http://localhost:5187/api/v2/courses
+
+//to test a Valid Enrollment
+###
+POST http://localhost:5187/api/v2/enrollments
+Content-Type: application/json
+
+{
+    "studentId": 1,
+    "courseCode": "CSE-101"
+}
+
+//to test Invalid Course Code
+###
+POST http://localhost:5187/api/v2/enrollments
+Content-Type: application/json
+
+{
+  "studentId": 1,
+  "courseCode": "invalid"
+}
+
+//to test Course does not exist
+###
+POST http://localhost:5187/api/v2/enrollments
+Content-Type: application/json
+
+{
+  "studentId": 1,
+  "courseCode": "ZZZ-999"
+}
+
+//to test same StudId and Course to get 409 (Duplicate Enrollment)
+###
+POST http://localhost:5187/api/v2/enrollments
+Content-Type: application/json
+
+{
+  "studentId": 1,
+  "courseCode": "CSE-101"
+}
+
+###
+PUT http://localhost:5187/api/v2/courses/CSE-101
+Content-Type: application/json
+
+{
+    "title": "Advanced Programming",
+    "maxCapacity": 80
+}
+
+###
+DELETE http://localhost:5187/api/v2/courses/CSE-101
+
+
+###
+GET http://localhost:5187/api/v2/courses/search?term=CSE
+
+# //to test on powershell
+# 1..50 | ForEach-Object -Parallel {
+# >> Invoke-RestMethod http://localhost:5187/api/v2/courses | Out-Null 
+# >> }-ThrottleLimit 50
